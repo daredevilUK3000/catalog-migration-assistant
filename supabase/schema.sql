@@ -72,7 +72,10 @@ create table if not exists catalog_issues (
       'missing_audio_file',
       'artwork_too_small',
       'missing_release_date',
-      'track_count_mismatch'
+      'missing_upc',
+      'missing_songwriter_credit',
+      'track_count_mismatch',
+      'likely_duplicate_album'
     )),
   severity text not null default 'warning'
     check (severity in ('warning', 'error')),
@@ -84,6 +87,29 @@ create table if not exists catalog_issues (
 
 create index if not exists idx_catalog_issues_album_id on catalog_issues(album_id);
 create index if not exists idx_catalog_issues_resolved on catalog_issues(resolved);
+
+-- Migration Confidence Score feature: adds missing_upc and
+-- missing_songwriter_credit as detectable issue types, and separately fixes a
+-- pre-existing gap — likely_duplicate_album has been a valid TypeScript
+-- IssueType (and something checkLikelyDuplicateAlbums in lib/catalogHealth.ts
+-- actually inserts) since before this feature, but was never in this
+-- constraint, so those inserts would have failed against a DB created from
+-- this file. Safe to re-run: drops and recreates the constraint with the
+-- full set below.
+alter table catalog_issues drop constraint if exists catalog_issues_issue_type_check;
+alter table catalog_issues add constraint catalog_issues_issue_type_check
+  check (issue_type in (
+    'missing_isrc',
+    'duplicate_isrc',
+    'missing_lyrics',
+    'missing_audio_file',
+    'artwork_too_small',
+    'missing_release_date',
+    'missing_upc',
+    'missing_songwriter_credit',
+    'track_count_mismatch',
+    'likely_duplicate_album'
+  ));
 
 -- ============================================================
 -- DISTRIBUTOR PROFILES

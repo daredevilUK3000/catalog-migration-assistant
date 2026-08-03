@@ -1,0 +1,13 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <title>Paste Queue offscreen document</title>
+  </head>
+  <body>
+    <!-- Exists only so a document context is available to call
+         navigator.clipboard.writeText() from — MV3 service workers have no
+         DOM and can't call the Clipboard API directly. -->
+    <script src="offscreen.js"></script>
+  </body>
+</html>

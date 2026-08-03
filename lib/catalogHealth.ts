@@ -31,6 +31,16 @@ function checkAlbumFields(album: Album, tracks: Track[]): IssueFinding[] {
     });
   }
 
+  if (!album.upc) {
+    findings.push({
+      album_id: album.id,
+      track_id: null,
+      issue_type: "missing_upc",
+      severity: "warning",
+      message: `"${album.title}" has no UPC set.`,
+    });
+  }
+
   if (tracks.length === 0) {
     findings.push({
       album_id: album.id,
@@ -81,6 +91,18 @@ function checkAlbumFields(album: Album, tracks: Track[]): IssueFinding[] {
         issue_type: "missing_audio_file",
         severity: "error",
         message: `Track ${track.position}. "${track.title}" has no audio file attached.`,
+      });
+    }
+    // Credit.role is freeform text, not a fixed enum — a substring match is
+    // the only non-guessing way to tell "no songwriter credit at all" apart
+    // from "has other credits (producer, performer) but not this one".
+    if (!track.credits.some((c) => c.role.toLowerCase().includes("songwriter"))) {
+      findings.push({
+        album_id: album.id,
+        track_id: track.id,
+        issue_type: "missing_songwriter_credit",
+        severity: "warning",
+        message: `Track ${track.position}. "${track.title}" has no songwriter credit.`,
       });
     }
   }

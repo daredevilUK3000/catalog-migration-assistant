@@ -1,0 +1,22 @@
+{
+  "manifest_version": 3,
+  "name": "Paste Queue — Catalog Migration Assistant",
+  "version": "0.1.0",
+  "description": "Copies the next catalog field to your clipboard on a global hotkey, so you never alt-tab back to the reference sheet while filling out a distributor's manual upload form.",
+  "permissions": ["storage", "clipboardWrite", "offscreen"],
+  "background": {
+    "service_worker": "background.js"
+  },
+  "action": {
+    "default_popup": "popup.html",
+    "default_title": "Paste Queue"
+  },
+  "commands": {
+    "advance-queue": {
+      "suggested_key": {
+        "default": "Alt+Shift+C"
+      },
+      "description": "Copy the next field and advance the queue"
+    }
+  }
+}

@@ -17,6 +17,8 @@ export type IssueType =
   | "missing_audio_file"
   | "artwork_too_small"
   | "missing_release_date"
+  | "missing_upc"
+  | "missing_songwriter_credit"
   | "track_count_mismatch"
   | "likely_duplicate_album";
 

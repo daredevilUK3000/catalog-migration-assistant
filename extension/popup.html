@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <title>Paste Queue</title>
+    <link rel="stylesheet" href="popup.css" />
+  </head>
+  <body>
+    <main>
+      <h1>Paste Queue</h1>
+
+      <p id="status" class="status"></p>
+      <p id="progress" class="progress"></p>
+      <p class="hotkey">Hotkey: <strong id="hotkey">…</strong></p>
+
+      <div class="actions">
+        <button id="reset-btn" type="button">Reset to start</button>
+        <button id="clear-btn" type="button">Clear queue</button>
+      </div>
+
+      <hr />
+
+      <label for="json-input">Paste the queue JSON from the app's export page</label>
+      <textarea
+        id="json-input"
+        rows="6"
+        placeholder='{"fields": [{"label": "...", "value": "..."}]}'
+      ></textarea>
+      <p id="load-error" class="error"></p>
+      <button id="load-btn" type="button" class="primary">Load queue</button>
+    </main>
+    <script src="popup.js"></script>
+  </body>
+</html>

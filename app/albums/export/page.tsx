@@ -1,7 +1,8 @@
 import { notFound } from "next/navigation";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { buildExportPack, type ExportRow } from "@/lib/exportPack";
+import { buildExportPack, buildPasteQueue, type ExportRow } from "@/lib/exportPack";
 import type { Album, Track, DistributorProfile } from "@/types/catalog";
+import CopyQueueJsonButton from "./CopyQueueJsonButton";
 
 // Reads live catalog state — must not be prerendered as static build-time HTML.
 export const dynamic = "force-dynamic";
@@ -164,6 +165,46 @@ function ExportPackView({
           </dl>
         </div>
       ))}
+
+      <PasteQueueCard profile={profile} album={album} pack={pack} />
+    </div>
+  );
+}
+
+function PasteQueueCard({
+  profile,
+  album,
+  pack,
+}: {
+  profile: DistributorProfile;
+  album: Album;
+  pack: ReturnType<typeof buildExportPack>;
+}) {
+  const queueFields = buildPasteQueue(pack);
+  const json = JSON.stringify(
+    { album: `${album.title} — ${album.artist}`, distributor: profile.display_name, fields: queueFields },
+    null,
+    2
+  );
+
+  return (
+    <div className="space-y-3 rounded-lg border border-neutral-200 bg-white p-6">
+      <div>
+        <h2 className="text-sm font-medium text-neutral-700">Paste Queue extension</h2>
+        <p className="mt-1 text-sm text-neutral-600">
+          {queueFields.length} field{queueFields.length === 1 ? "" : "s"} with a value to fill in.
+          Copy this JSON and paste it into the Paste Queue extension&apos;s popup, then use its
+          hotkey to copy one field at a time straight into {profile.display_name}&apos;s form —
+          no more alt-tabbing back here to re-read a value.
+        </p>
+      </div>
+      <CopyQueueJsonButton json={json} />
+      <textarea
+        readOnly
+        value={json}
+        rows={6}
+        className="w-full rounded border border-neutral-300 bg-neutral-50 p-2 font-mono text-xs text-neutral-700"
+      />
     </div>
   );
 }

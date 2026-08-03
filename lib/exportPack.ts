@@ -87,6 +87,39 @@ function csvEscape(value: string): string {
   return value;
 }
 
+export interface PasteQueueField {
+  label: string;
+  value: string;
+}
+
+/** Flattens an ExportPack into the ordered field list the Paste Queue
+ * extension steps through — same order the reference sheet renders (album
+ * sections, then tracks in position order). Track rows are prefixed with the
+ * track's position/title since flattening otherwise loses which track a bare
+ * label like "ISRC" belongs to. Rows with no value are dropped — there's
+ * nothing for a hotkey press to copy there, so the musician just fills those
+ * in by hand same as any other blank on the reference sheet. */
+export function buildPasteQueue(pack: ExportPack): PasteQueueField[] {
+  const fields: PasteQueueField[] = [];
+
+  for (const section of pack.albumSections) {
+    for (const row of section.rows) {
+      if (!row.value) continue;
+      fields.push({ label: row.label, value: row.value });
+    }
+  }
+
+  for (const section of pack.trackSections) {
+    const trackLabel = `Track ${section.track.position} — ${section.track.title}`;
+    for (const row of section.rows) {
+      if (!row.value) continue;
+      fields.push({ label: `${trackLabel}: ${row.label}`, value: row.value });
+    }
+  }
+
+  return fields;
+}
+
 /** One row per track, with album-level fields repeated on every row — the
  * common flat shape bulk metadata CSV importers expect. */
 export function buildExportCsv(profile: DistributorProfile, album: Album, tracks: Track[]): string {

@@ -191,6 +191,76 @@ chat conversation where this was designed).
   idempotent on `(album_id, target_distributor_id)`, matching the schema's
   unique constraint, and an album can track migrations to more than one
   target distributor at once.
+- **Migration Confidence Score, Preflight, and PDF report** (`/health`,
+  `/health/preflight`, "Generate report"): a scoring layer over the existing
+  `catalog_issues` — no new detection engine. `lib/migrationScore.ts` starts
+  each album at 100, deducts per issue type (Critical: missing ISRC −6/track,
+  duplicate ISRC −8/pair, missing audio −6/track, track count mismatch −15
+  flat; Important: undersized artwork/missing release date/missing UPC −4-5
+  flat; Minor: missing lyrics/songwriter credit −1/track), floors at 0, then
+  caps at 79 if any Critical issue remains — so one bad ISRC can't be
+  mathed away by forty tracks' worth of minor deductions. Bands: 95-100 Ready
+  to Migrate, 80-94 Needs Attention, 0-79 Not Ready. The catalog-level number
+  is the mean of album scores, always shown next to the single weakest
+  album, not alone. `duplicate_isrc` pairs are approximated as
+  `floor(affected tracks / 2)`, since `checkDuplicateIsrcs` stores one row
+  per track in the collision, not one per pair — exact for the common
+  2-track case. `likely_duplicate_album` carries no deduction (catalog
+  hygiene, not migration readiness). Two issue types the scoring spec
+  needed didn't exist yet and were added to `lib/catalogHealth.ts`:
+  `missing_upc` (album-level) and `missing_songwriter_credit` (per track,
+  matched via a case-insensitive substring on `Credit.role` since it's
+  freeform text, not an enum) — same pattern as the `missing_release_date` /
+  `missing_lyrics` checks already there. Also fixed in passing:
+  `likely_duplicate_album` was a valid `IssueType` and something
+  `checkLikelyDuplicateAlbums` actually inserted, but was missing from the
+  `catalog_issues.issue_type` check constraint — those inserts would have
+  failed against a DB built from this file. All copy is worded as data
+  readiness ("your data is ready to migrate"), deliberately never as a
+  guarantee that streams, playlist placements, or royalties survive the
+  actual DSP-side switch, since this tool has no visibility into that once
+  the catalog leaves it. Preflight (`/health/preflight?album_id=<id>`, or no
+  param for the whole catalog) is a pure presentation layer —
+  `buildPreflightSteps()` turns the same unresolved issues into an ordered
+  step list, and `PreflightAnimation.tsx` reveals them one at a time on a
+  timer, ending on the same score/badge shown on `/health`. The PDF
+  (`lib/migrationReportPdf.tsx`, `@react-pdf/renderer`, rendered server-side
+  in `app/api/reports/pdf`) is meant as the artist's permanent,
+  tool-independent record — every album, track, ISRC, UPC, credit, and the
+  validation state at generation time. It prints "Not on file" for copyright
+  holder rather than fabricate one — that field is referenced in the Ditto/
+  DistroKid export mappings but was never added to the `albums`/`tracks`
+  schema itself.
+- **Paste Queue browser extension** (`extension/`): a minimal Manifest V3
+  Chrome extension that closes the last gap on the export reference sheet —
+  no more alt-tabbing back to `/albums/export` to re-read each value while
+  filling in a distributor's manual form. `lib/exportPack.ts`'s
+  `buildPasteQueue()` flattens an already-built `ExportPack` (same order the
+  reference sheet renders) into a `{label, value}[]`, dropping blank rows;
+  the export page's new "Paste Queue extension" card
+  (`app/albums/export/CopyQueueJsonButton.tsx`) copies that as JSON. Paste it
+  into the extension's popup, then a single global hotkey (`Alt+Shift+C` by
+  default, `chrome.commands`, rebindable at `chrome://extensions/shortcuts`)
+  copies the next field to the clipboard and advances, regardless of which
+  window has focus — paste, hotkey, click next field, paste, repeat. v0 loads
+  data by pasting a JSON blob rather than fetching an API endpoint, since
+  this app has no real per-user auth yet (see the `DEV_USER_ID` note below) —
+  designing that just to authorize an extension fetch would be solving the
+  wrong problem first. Permissions are `storage`, `clipboardWrite`, and
+  `offscreen` — one more than the feature conceptually needs
+  (`clipboardWrite`/`commands`), for two forced reasons, not scope creep:
+  MV3 service workers are killed after ~30s idle and lose all in-memory
+  state, so the queue/index have to live in `chrome.storage.local` or a
+  short pause between fields would silently lose your place; and
+  `navigator.clipboard.writeText()` isn't callable from a service worker at
+  all (no DOM there) — the actual write happens in a short-lived offscreen
+  document (`extension/offscreen.html`/`.js`) that `background.js` spins up
+  on demand, which is the only reason that file exists. The toolbar badge
+  (`4/42`) is the always-visible indicator; the popup adds the next field's
+  actual label, since a badge can't fit one. It never reads, inspects, or
+  submits anything on the distributor's page — strictly a clipboard
+  sequencer the musician drives by hand. See `extension/README.md` for
+  load-unpacked steps.
 - **v0 auth stand-in:** no login flow yet. Every write goes through the
   admin client and attributes the record to a single `DEV_USER_ID` (see
   `.env.example`) — create that Supabase auth user once, by hand.

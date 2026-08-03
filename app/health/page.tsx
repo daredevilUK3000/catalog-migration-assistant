@@ -1,8 +1,11 @@
 import Link from "next/link";
 import { createAdminClient } from "@/lib/supabase/admin";
 import type { Album, CatalogIssue } from "@/types/catalog";
+import { computeCatalogScore, SCORE_FRAMING_NOTE } from "@/lib/migrationScore";
+import { ScoreBadge, ScoreProgressBar } from "./scoreDisplay";
 import RunHealthCheckButton from "./RunHealthCheckButton";
 import DeleteAlbumButton from "./DeleteAlbumButton";
+import GenerateReportButton from "./GenerateReportButton";
 
 // This page reads live catalog/issue state that changes via user actions
 // (import, file attachment, running a health check) — it must not be
@@ -66,6 +69,9 @@ export default async function HealthPage() {
   const warningCount = issues.filter((i) => i.severity === "warning").length;
   const ready = errorCount === 0;
 
+  const catalogScore = computeCatalogScore(albums, issues);
+  const albumScoreById = new Map(catalogScore.albums.map((s) => [s.album_id, s]));
+
   return (
     <main className="min-h-screen bg-neutral-50 px-6 py-10">
       <div className="mx-auto max-w-4xl space-y-8">
@@ -76,8 +82,41 @@ export default async function HealthPage() {
               Deterministic checks against your confirmed catalog — no AI involved.
             </p>
           </div>
-          <RunHealthCheckButton />
+          <div className="flex shrink-0 items-center gap-3">
+            <Link
+              href="/health/preflight"
+              className="rounded-md border border-neutral-300 px-4 py-2 text-sm font-medium text-neutral-900"
+            >
+              Preflight check
+            </Link>
+            {albums.length > 0 && <GenerateReportButton label="Generate report" />}
+            <RunHealthCheckButton />
+          </div>
         </div>
+
+        {albums.length > 0 && (
+          <div className="space-y-3 rounded-lg border border-neutral-200 bg-white p-6">
+            <div className="flex flex-wrap items-baseline justify-between gap-3">
+              <div className="flex items-baseline gap-3">
+                <span className="text-4xl font-semibold text-neutral-900">
+                  {catalogScore.average}%
+                </span>
+                <ScoreBadge band={catalogScore.band} />
+              </div>
+              {catalogScore.weakest && (
+                <p className="text-sm text-neutral-500">
+                  Weakest album:{" "}
+                  <span className="font-medium text-neutral-700">
+                    {albums.find((a) => a.id === catalogScore.weakest!.album_id)?.title ?? "—"}
+                  </span>{" "}
+                  — {catalogScore.weakest.score}%
+                </p>
+              )}
+            </div>
+            <ScoreProgressBar score={catalogScore.average} band={catalogScore.band} />
+            <p className="text-xs text-neutral-500">{SCORE_FRAMING_NOTE}</p>
+          </div>
+        )}
 
         <div className="space-y-2 rounded-lg border border-neutral-200 bg-white p-6">
           <p className="text-sm text-neutral-700">
@@ -114,6 +153,7 @@ export default async function HealthPage() {
               const albumIssues = issuesByAlbum.get(album.id) ?? [];
               const albumErrorCount = albumIssues.filter((i) => i.severity === "error").length;
               const trackCount = trackCountByAlbum.get(album.id) ?? 0;
+              const albumScore = albumScoreById.get(album.id);
               return (
                 <li key={album.id} className="rounded-lg border border-neutral-200 bg-white p-6">
                   <div className="flex items-start justify-between gap-4">
@@ -125,6 +165,14 @@ export default async function HealthPage() {
                       <p className="text-sm text-neutral-500">
                         {trackCount} track{trackCount === 1 ? "" : "s"}
                       </p>
+                      {albumScore && (
+                        <div className="mt-2 flex items-center gap-2">
+                          <span className="text-sm font-medium text-neutral-700">
+                            {albumScore.score}%
+                          </span>
+                          <ScoreBadge band={albumScore.band} />
+                        </div>
+                      )}
                     </div>
                     <div className="flex shrink-0 items-center gap-3 text-sm">
                       {albumIssues.length === 0 ? (
@@ -134,6 +182,13 @@ export default async function HealthPage() {
                           {albumIssues.length} issue{albumIssues.length === 1 ? "" : "s"}
                         </span>
                       )}
+                      <Link
+                        href={`/health/preflight?album_id=${album.id}`}
+                        className="text-neutral-900 underline"
+                      >
+                        Preflight
+                      </Link>
+                      <GenerateReportButton albumId={album.id} label="Report" />
                       <Link href={`/albums/edit?id=${album.id}`} className="text-neutral-900 underline">
                         Edit
                       </Link>
