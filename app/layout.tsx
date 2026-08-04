@@ -61,7 +61,7 @@ export default async function RootLayout({
               className="flex items-center gap-4 font-display font-bold text-paper tracking-wide text-6xl"
               style={{ fontFamily: "var(--font-display)" }}
             >
-              <LogoMark size={160} />
+              <LogoMark size={128} />
               OwnYourMusic
             </Link>
             <div className="flex items-center gap-6">
