@@ -1,25 +1,44 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Image from "next/image";
 import type { Album, Track } from "@/types/catalog";
-import { uploadCatalogFile } from "@/lib/uploadFile";
+import { uploadArtworkFile } from "@/lib/uploadFile";
+import {
+  isLocalFileVerificationSupported,
+  pickAudioFolder,
+  listAudioFiles,
+  formatBytes,
+  type LocalAudioFile,
+} from "@/lib/localAudio";
 
 const ARTWORK_ACCEPT = "image/jpeg,image/png,image/webp";
-const AUDIO_ACCEPT = "audio/mpeg,audio/wav,audio/x-wav,audio/flac,audio/mp4,audio/aac,audio/ogg";
 
 type UploadStatus = "idle" | "uploading" | "error";
+type SaveStatus = "idle" | "saving" | "error";
 
 export default function AttachFilesForm({ album, tracks }: { album: Album; tracks: Track[] }) {
   const [artworkUrl, setArtworkUrl] = useState(album.artwork_url);
   const [artworkStatus, setArtworkStatus] = useState<UploadStatus>("idle");
   const [artworkError, setArtworkError] = useState<string | null>(null);
 
-  const [audioUrls, setAudioUrls] = useState<Record<string, string | null>>(
+  const [audioRefs, setAudioRefs] = useState<Record<string, string | null>>(
     Object.fromEntries(tracks.map((t) => [t.id, t.audio_file_url]))
   );
-  const [trackStatus, setTrackStatus] = useState<Record<string, UploadStatus>>({});
+  const [trackStatus, setTrackStatus] = useState<Record<string, SaveStatus>>({});
   const [trackErrors, setTrackErrors] = useState<Record<string, string | null>>({});
+
+  const [supportsLocalVerification, setSupportsLocalVerification] = useState<boolean | null>(null);
+  useEffect(() => {
+    setSupportsLocalVerification(isLocalFileVerificationSupported());
+  }, []);
+
+  const [folderFiles, setFolderFiles] = useState<LocalAudioFile[] | null>(null);
+  const [folderError, setFolderError] = useState<string | null>(null);
+  const [selectedMatch, setSelectedMatch] = useState<Record<string, string>>({});
+
+  const [manualFilename, setManualFilename] = useState<Record<string, string>>({});
+  const [manualConfirmed, setManualConfirmed] = useState<Record<string, boolean>>({});
 
   async function handleArtworkChange(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
@@ -28,7 +47,7 @@ export default function AttachFilesForm({ album, tracks }: { album: Album; track
     setArtworkStatus("uploading");
     setArtworkError(null);
     try {
-      const url = await uploadCatalogFile({ kind: "artwork", albumId: album.id, file });
+      const url = await uploadArtworkFile({ albumId: album.id, file });
       setArtworkUrl(url);
       setArtworkStatus("idle");
     } catch (err) {
@@ -39,33 +58,41 @@ export default function AttachFilesForm({ album, tracks }: { album: Album; track
     }
   }
 
-  async function handleTrackAudioChange(track: Track, e: React.ChangeEvent<HTMLInputElement>) {
-    const file = e.target.files?.[0];
-    if (!file) return;
+  async function handlePickFolder() {
+    setFolderError(null);
+    try {
+      const dir = await pickAudioFolder();
+      const files = await listAudioFiles(dir);
+      setFolderFiles(files);
+    } catch (err) {
+      if (err instanceof DOMException && err.name === "AbortError") return;
+      setFolderError(err instanceof Error ? err.message : "Could not read the selected folder.");
+    }
+  }
 
-    setTrackStatus((prev) => ({ ...prev, [track.id]: "uploading" }));
+  async function saveReference(track: Track, reference: string | null) {
+    setTrackStatus((prev) => ({ ...prev, [track.id]: "saving" }));
     setTrackErrors((prev) => ({ ...prev, [track.id]: null }));
     try {
-      const url = await uploadCatalogFile({
-        kind: "audio",
-        albumId: album.id,
-        trackId: track.id,
-        file,
+      const res = await fetch("/api/tracks/audio-reference", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ album_id: album.id, track_id: track.id, reference }),
       });
-      setAudioUrls((prev) => ({ ...prev, [track.id]: url }));
+      const body = await res.json();
+      if (!res.ok) throw new Error(body.error ?? "Could not save the audio reference.");
+      setAudioRefs((prev) => ({ ...prev, [track.id]: body.reference }));
       setTrackStatus((prev) => ({ ...prev, [track.id]: "idle" }));
     } catch (err) {
       setTrackStatus((prev) => ({ ...prev, [track.id]: "error" }));
       setTrackErrors((prev) => ({
         ...prev,
-        [track.id]: err instanceof Error ? err.message : "Upload failed.",
+        [track.id]: err instanceof Error ? err.message : "Save failed.",
       }));
-    } finally {
-      e.target.value = "";
     }
   }
 
-  const attachedCount = tracks.filter((t) => audioUrls[t.id]).length;
+  const attachedCount = tracks.filter((t) => audioRefs[t.id]).length;
 
   return (
     <div className="space-y-6">
@@ -105,47 +132,163 @@ export default function AttachFilesForm({ album, tracks }: { album: Album; track
         <div className="flex items-center justify-between">
           <h2 className="text-sm font-medium text-neutral-700">Track audio</h2>
           <span className="text-sm text-neutral-500">
-            {attachedCount} / {tracks.length} attached
+            {attachedCount} / {tracks.length} verified
           </span>
         </div>
+        <p className="text-xs text-neutral-500">
+          Your master audio files stay on your own computer. We verify they exist and are
+          correctly matched to your catalog — we just never store or upload them ourselves.
+        </p>
 
-        <ul className="divide-y divide-neutral-100">
-          {tracks.map((track) => {
-            const status = trackStatus[track.id] ?? "idle";
-            const url = audioUrls[track.id];
-            return (
-              <li key={track.id} className="flex items-center justify-between gap-4 py-3">
-                <div className="min-w-0 flex-1">
+        {supportsLocalVerification === null ? null : supportsLocalVerification ? (
+          <>
+            <div className="flex flex-wrap items-center gap-3">
+              <button
+                type="button"
+                onClick={handlePickFolder}
+                className="rounded-md bg-neutral-900 px-4 py-2 text-sm font-medium text-white"
+              >
+                {folderFiles ? "Change local folder" : "Choose local audio folder"}
+              </button>
+              {folderFiles && (
+                <span className="text-sm text-neutral-500">
+                  {folderFiles.length} audio file{folderFiles.length === 1 ? "" : "s"} found
+                </span>
+              )}
+            </div>
+            {folderError && <p className="text-sm text-red-600">{folderError}</p>}
+
+            <ul className="divide-y divide-neutral-100">
+              {tracks.map((track) => {
+                const status = trackStatus[track.id] ?? "idle";
+                const reference = audioRefs[track.id];
+                const matchedFile = folderFiles?.find((f) => f.relativePath === reference);
+                return (
+                  <li key={track.id} className="space-y-2 py-3">
+                    <p className="truncate text-sm text-neutral-900">
+                      {track.position}. {track.title}
+                    </p>
+                    {reference ? (
+                      <p className="text-xs text-emerald-700">
+                        Verified: {reference}
+                        {matchedFile && ` (${matchedFile.format}, ${formatBytes(matchedFile.size)})`}
+                      </p>
+                    ) : (
+                      <p className="text-xs text-neutral-400">No audio verified</p>
+                    )}
+                    {trackErrors[track.id] && (
+                      <p className="text-sm text-red-600">{trackErrors[track.id]}</p>
+                    )}
+                    <div className="flex flex-wrap items-center gap-2">
+                      {folderFiles && folderFiles.length > 0 && (
+                        <>
+                          <select
+                            value={selectedMatch[track.id] ?? ""}
+                            onChange={(e) =>
+                              setSelectedMatch((prev) => ({ ...prev, [track.id]: e.target.value }))
+                            }
+                            disabled={status === "saving"}
+                            className="rounded-md border border-neutral-300 px-2 py-1.5 text-xs text-neutral-700"
+                          >
+                            <option value="">Select a file…</option>
+                            {folderFiles.map((f) => (
+                              <option key={f.relativePath} value={f.relativePath}>
+                                {f.relativePath}
+                              </option>
+                            ))}
+                          </select>
+                          <button
+                            type="button"
+                            disabled={!selectedMatch[track.id] || status === "saving"}
+                            onClick={() => saveReference(track, selectedMatch[track.id])}
+                            className="rounded-md border-0 bg-neutral-900 px-3 py-1.5 text-xs font-medium text-white disabled:opacity-40"
+                          >
+                            Verify
+                          </button>
+                        </>
+                      )}
+                      {reference && (
+                        <button
+                          type="button"
+                          disabled={status === "saving"}
+                          onClick={() => saveReference(track, null)}
+                          className="text-xs text-neutral-500 underline"
+                        >
+                          Clear
+                        </button>
+                      )}
+                    </div>
+                  </li>
+                );
+              })}
+            </ul>
+          </>
+        ) : (
+          <ul className="divide-y divide-neutral-100">
+            {tracks.map((track) => {
+              const status = trackStatus[track.id] ?? "idle";
+              const reference = audioRefs[track.id];
+              const filenameValue = manualFilename[track.id] ?? reference ?? "";
+              const confirmed = manualConfirmed[track.id] ?? false;
+              return (
+                <li key={track.id} className="space-y-2 py-3">
                   <p className="truncate text-sm text-neutral-900">
                     {track.position}. {track.title}
                   </p>
-                  {url ? (
-                    // eslint-disable-next-line jsx-a11y/media-has-caption
-                    <audio controls src={url} className="mt-1 h-8 w-full max-w-xs" />
+                  {reference ? (
+                    <p className="text-xs text-emerald-700">Self-attested: {reference}</p>
                   ) : (
-                    <p className="text-xs text-neutral-400">No audio attached</p>
+                    <p className="text-xs text-neutral-400">No audio confirmed</p>
                   )}
                   {trackErrors[track.id] && (
                     <p className="text-sm text-red-600">{trackErrors[track.id]}</p>
                   )}
-                </div>
-                <label className="shrink-0">
-                  <span className="sr-only">Upload audio for {track.title}</span>
-                  <input
-                    type="file"
-                    accept={AUDIO_ACCEPT}
-                    disabled={status === "uploading"}
-                    onChange={(e) => handleTrackAudioChange(track, e)}
-                    className="block text-sm text-neutral-600 file:mr-2 file:rounded-md file:border-0 file:bg-neutral-900 file:px-3 file:py-1.5 file:text-xs file:font-medium file:text-white"
-                  />
-                  {status === "uploading" && (
-                    <span className="mt-1 block text-xs text-neutral-500">Uploading…</span>
-                  )}
-                </label>
-              </li>
-            );
-          })}
-        </ul>
+                  <div className="flex flex-wrap items-center gap-2">
+                    <input
+                      type="text"
+                      placeholder="Filename, e.g. 02 Track Title.wav"
+                      value={filenameValue}
+                      onChange={(e) =>
+                        setManualFilename((prev) => ({ ...prev, [track.id]: e.target.value }))
+                      }
+                      disabled={status === "saving"}
+                      className="rounded-md border border-neutral-300 px-2 py-1.5 text-xs text-neutral-700"
+                    />
+                    <label className="flex items-center gap-1 text-xs text-neutral-600">
+                      <input
+                        type="checkbox"
+                        checked={confirmed}
+                        onChange={(e) =>
+                          setManualConfirmed((prev) => ({ ...prev, [track.id]: e.target.checked }))
+                        }
+                        disabled={status === "saving"}
+                      />
+                      This file exists on my computer
+                    </label>
+                    <button
+                      type="button"
+                      disabled={status === "saving" || !filenameValue.trim() || !confirmed}
+                      onClick={() => saveReference(track, filenameValue.trim())}
+                      className="rounded-md border-0 bg-neutral-900 px-3 py-1.5 text-xs font-medium text-white disabled:opacity-40"
+                    >
+                      Save
+                    </button>
+                    {reference && (
+                      <button
+                        type="button"
+                        disabled={status === "saving"}
+                        onClick={() => saveReference(track, null)}
+                        className="text-xs text-neutral-500 underline"
+                      >
+                        Clear
+                      </button>
+                    )}
+                  </div>
+                </li>
+              );
+            })}
+          </ul>
+        )}
       </div>
     </div>
   );

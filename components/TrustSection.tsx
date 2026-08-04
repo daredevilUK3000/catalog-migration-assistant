@@ -16,6 +16,10 @@ const PROMISES = [
     title: "Your catalog, permanently",
     body: "Once imported, your catalog is portable, structured data you own — independent of any distributor or AI service.",
   },
+  {
+    title: "Your masters never leave your computer",
+    body: "Your master audio files stay on your own computer. We verify they exist and are correctly matched to your catalog — we just never store or upload them ourselves.",
+  },
 ];
 
 export default function TrustSection() {
@@ -35,7 +39,7 @@ export default function TrustSection() {
           You stay in control of every account, every step.
         </h2>
 
-        <div className="mt-16 grid md:grid-cols-3 gap-8">
+        <div className="mt-16 grid md:grid-cols-2 lg:grid-cols-4 gap-8">
           {PROMISES.map((p) => (
             <div
               key={p.title}

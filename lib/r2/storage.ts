@@ -2,10 +2,13 @@ import { PutObjectCommand, GetObjectCommand } from "@aws-sdk/client-s3";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 import { createR2Client } from "./client";
 
-// Kind-aware like the existing Supabase upload path (app/api/files/sign),
-// so this is ready if artwork ever moves here too — but right now only
-// audio is actually routed through R2; artwork stays on Supabase.
-export type R2FileKind = "artwork" | "audio";
+// Nothing currently calls the functions in this module. Audio moved to
+// local-first verification (lib/localAudio.ts) instead of any remote
+// storage, and artwork stays on Supabase Storage (app/api/files/sign,
+// app/api/files/attach) rather than moving here. Left in place, unused, as
+// ready-to-wire infrastructure in case artwork is ever moved onto R2 — a
+// deliberate product decision, not dead code to clean up.
+export type R2FileKind = "artwork";
 
 const UPLOAD_URL_EXPIRES_SECONDS = 5 * 60;
 const READ_URL_EXPIRES_SECONDS = 60 * 60;
@@ -13,22 +16,15 @@ const READ_URL_EXPIRES_SECONDS = 60 * 60;
 /** Same path convention as app/api/files/sign's Supabase paths, so the two
  * providers stay consistent if one is ever swapped for the other. */
 export function r2ObjectKey({
-  kind,
   userId,
   albumId,
-  trackId,
   ext,
 }: {
-  kind: R2FileKind;
   userId: string;
   albumId: string;
-  trackId?: string;
   ext: string;
 }): string {
-  if (kind === "artwork") {
-    return `${userId}/${albumId}/cover.${ext}`;
-  }
-  return `${userId}/${albumId}/${trackId}.${ext}`;
+  return `${userId}/${albumId}/cover.${ext}`;
 }
 
 export async function createR2UploadUrl(key: string, contentType: string): Promise<string> {

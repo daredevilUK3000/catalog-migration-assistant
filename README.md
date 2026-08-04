@@ -17,7 +17,8 @@ chat conversation where this was designed).
 
 - `supabase/schema.sql` — full schema: `albums`, `tracks`, `catalog_issues`,
   `distributor_profiles`, `migration_records`, RLS policies, and the
-  `artwork` / `audio` storage buckets. Run this in the Supabase SQL editor
+  `artwork` storage bucket (audio is local-first, never stored server-side —
+  see the file attachment entry below). Run this in the Supabase SQL editor
   to set up a fresh project (safe to re-run — idempotent).
 - `types/catalog.ts` — TypeScript types matching the schema, plus
   `ExtractedAlbumDraft` for the shape returned by the import step before
@@ -61,11 +62,20 @@ chat conversation where this was designed).
     queue slot — cleaner than syncing props into stale local state), with
     a "Release N of M" label and a "Skip this release" option that only
     appears mid-batch.
-- **File attachment** (`/albums/attach?id=<albumId>`): per-track audio and
-  album artwork upload, direct to Supabase Storage via server-issued signed
-  upload URLs (`app/api/files/sign`, `app/api/files/attach`) — the file
-  never passes through a Next.js route handler, so it isn't subject to
-  Vercel's serverless body-size limit.
+- **File attachment** (`/albums/attach?id=<albumId>`): album artwork
+  uploads direct to Supabase Storage via server-issued signed upload URLs
+  (`app/api/files/sign`, `app/api/files/attach`) — the file never passes
+  through a Next.js route handler, so it isn't subject to Vercel's
+  serverless body-size limit. Audio is local-first, not uploaded anywhere:
+  on Chromium browsers (Chrome, Edge) the user picks a local folder once via
+  the File System Access API (`lib/localAudio.ts`), the tool verifies each
+  expected track's file actually exists and reads its filename/size/format,
+  and only the filename/relative path is saved
+  (`app/api/tracks/audio-reference`) — never the file itself. Safari/Firefox
+  have no equivalent API, so they get a manual fallback instead: the same
+  field, filled in by the user confirming a filename rather than the tool
+  verifying one. R2 (`lib/r2/`) is unused as of this change — kept in place
+  in case artwork ever moves there, but audio no longer touches it.
 - **Catalog health dashboard** (`/health`): the first albums-list view,
   plus deterministic (no-AI) checks in `lib/catalogHealth.ts` — missing
   ISRC/lyrics/audio/release date, duplicate ISRCs across the whole catalog,
@@ -296,10 +306,12 @@ matters more than anything on the v1 list below:
 
 ## Not built yet — v1 (per `docs/product-outline.md` §8)
 
-- ~~CSV/Excel and PDF import paths.~~ Done. Folder import (audio + artwork
-  files, no AI — filenames as metadata) is still unbuilt; it's a distinct
-  feature (local file access + the existing file-attachment upload
-  pipeline) rather than an extension of the CSV/PDF work.
+- ~~CSV/Excel and PDF import paths.~~ Done. Folder import as an *import*
+  path (bulk-creating albums/tracks from a folder structure, filenames as
+  metadata, no AI) is still unbuilt — distinct from the local audio
+  verification now used in file attachment (`lib/localAudio.ts`), which
+  matches files against an already-confirmed tracklist rather than creating
+  one.
 - A second and third distributor export profile
 - Generalize the export-profile system past the two hand-seeded rows
 - Polish the confirm-screen UX for non-technical users

@@ -54,7 +54,7 @@ The system routes each input type appropriately: structured formats (CSVs, folde
 Extracted data is shown as an **editable table** next to the source material, so the user can catch and fix anything misread — especially ISRCs, where a single wrong character breaks stream-history continuity. Nothing is saved to the permanent catalog until confirmed. This is the last moment AI is involved for that record.
 
 ### Step 3: Files
-Audio and artwork are attached to the confirmed record, matched against the already-confirmed track list.
+Artwork is uploaded and stored centrally (small files, genuinely needed for display in confirm screens and catalog browsing). Audio is different: master recordings stay on the musician's own computer and are never uploaded. Instead, the user points the tool at a local folder once (per album, or once globally with per-album subfolders); on Chromium browsers the File System Access API verifies each expected file actually exists and reads its filename, size, and format, feeding straight into Catalog Health. On browsers without that API, the same step is a manual self-attestation instead — the user confirms a filename exists rather than the tool verifying it. Either way, only the filename/relative path is recorded against the track, never the file itself.
 
 ### Step 4: Catalog Health Dashboard (no AI)
 Once records exist, the platform continuously runs deterministic validation across the whole catalog and surfaces a live summary:

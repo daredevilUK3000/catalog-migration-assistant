@@ -41,6 +41,12 @@ create table if not exists tracks (
 
   lyrics_plain text,
   lyrics_synced text,
+
+  -- Despite the name, a local reference, not a storage URL: the filename
+  -- or relative path of a file on the musician's own machine, either
+  -- verified via the browser's File System Access API or self-attested
+  -- where that's unsupported (see lib/localAudio.ts). The audio file
+  -- itself is never uploaded or stored server-side.
   audio_file_url text,
 
   -- Songwriter/producer/performer credits and splits, kept flexible
@@ -365,20 +371,27 @@ create policy "Authenticated users can read distributor profiles"
 
 -- ============================================================
 -- STORAGE BUCKETS
--- Album artwork only — track audio moved to Cloudflare R2 (lib/r2/storage.ts,
--- R2_ACCOUNT_ID etc. in .env), since this project's Supabase plan caps
--- bucket file_size_limit at 50MB (confirmed by probing 200/100/50MB
--- directly against the Storage API), too small for uncompressed WAV
--- masters. Uploads go through a server-issued signed upload URL (see
+-- Album artwork only. Track audio briefly moved through Cloudflare R2
+-- (lib/r2/storage.ts, R2_ACCOUNT_ID etc. in .env) after this project's
+-- Supabase plan proved too small a bucket file_size_limit (50MB cap,
+-- confirmed by probing 200/100/50MB directly against the Storage API) for
+-- uncompressed WAV masters — but under a one-time-purchase pricing model,
+-- storing audio centrally at all (on any provider) is an unsustainable
+-- ongoing cost. Audio is now local-first instead: verified or self-attested
+-- on the musician's own machine (lib/localAudio.ts), never uploaded. R2
+-- stays wired up, unused, in case artwork ever moves there.
+--
+-- Artwork uploads go through a server-issued signed upload URL (see
 -- app/api/files/sign) using the service role, which bypasses storage RLS —
 -- no storage.objects policies needed for that path. Public for reads:
 -- next.config.ts already allowlists *.supabase.co for next/image, and
 -- paths are UUID-scoped (not enumerable), but nothing stored here should
 -- be treated as secret.
 --
--- An 'audio' bucket may still exist from before this move — it's unused
--- now and safe to delete; nothing was ever successfully uploaded to it
--- (the 50MB cap is what forced the move to R2 in the first place).
+-- An 'audio' bucket may still exist from before the R2 move — it's unused
+-- and safe to delete; nothing was ever successfully uploaded to it (the
+-- 50MB cap is what forced the move to R2 in the first place, and R2 itself
+-- is now unused too).
 -- ============================================================
 insert into storage.buckets (id, name, public, file_size_limit, allowed_mime_types)
 values

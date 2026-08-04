@@ -53,9 +53,12 @@ export interface Track {
   isrc: string | null;
   lyrics_plain: string | null;
   lyrics_synced: string | null;
-  // Despite the name, this holds an R2 object key once audio is attached,
-  // not a directly usable URL — the bucket is private, so reads always go
-  // through a freshly generated signed URL (see lib/r2/storage.ts).
+  // Despite the name, this is a local reference, not a storage URL: the
+  // filename or relative path of a file on the musician's own machine,
+  // either verified via the File System Access API or self-attested on
+  // browsers without it (see lib/localAudio.ts). The audio file itself is
+  // never uploaded or stored — this column only records that it was found
+  // (or claimed) to exist and what it's called.
   audio_file_url: string | null;
   credits: Credit[];
   created_at: string;

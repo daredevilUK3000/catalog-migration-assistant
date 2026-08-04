@@ -1,6 +1,5 @@
 import { notFound } from "next/navigation";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { createR2ReadUrl } from "@/lib/r2/storage";
 import type { Album, Track } from "@/types/catalog";
 import AttachFilesForm from "./AttachFilesForm";
 
@@ -36,21 +35,6 @@ export default async function AttachFilesPage({
     .order("position");
   const tracks = (trackRows ?? []) as Track[];
 
-  // tracks.audio_file_url holds an R2 object key, not a usable URL, once
-  // audio is attached (the bucket is private) — resolve a fresh signed read
-  // URL per track before handing anything to the client component.
-  const resolvedTracks = await Promise.all(
-    tracks.map(async (track) => {
-      if (!track.audio_file_url) return track;
-      try {
-        const url = await createR2ReadUrl(track.audio_file_url);
-        return { ...track, audio_file_url: url };
-      } catch {
-        return { ...track, audio_file_url: null };
-      }
-    })
-  );
-
   return (
     <main className="min-h-screen bg-neutral-50 px-6 py-10">
       <div className="mx-auto max-w-3xl space-y-8">
@@ -60,7 +44,7 @@ export default async function AttachFilesPage({
             {album.title} — {album.artist}
           </p>
         </div>
-        <AttachFilesForm album={album} tracks={resolvedTracks} />
+        <AttachFilesForm album={album} tracks={tracks} />
       </div>
     </main>
   );
