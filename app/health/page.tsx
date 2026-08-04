@@ -1,5 +1,7 @@
 import Link from "next/link";
+import { redirect } from "next/navigation";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { getCurrentUserId } from "@/lib/auth/currentUser";
 import type { Album, CatalogIssue } from "@/types/catalog";
 import { computeCatalogScore, SCORE_FRAMING_NOTE } from "@/lib/migrationScore";
 import { ScoreBadge, ScoreProgressBar } from "./scoreDisplay";
@@ -13,18 +15,9 @@ import GenerateReportButton from "./GenerateReportButton";
 export const dynamic = "force-dynamic";
 
 export default async function HealthPage() {
-  const devUserId = process.env.DEV_USER_ID;
-
-  if (!devUserId) {
-    return (
-      <main className="min-h-screen bg-neutral-50 px-6 py-10">
-        <div className="mx-auto max-w-3xl">
-          <p className="text-red-600">
-            DEV_USER_ID is not configured. Set it in .env.local to use the catalog dashboard.
-          </p>
-        </div>
-      </main>
-    );
+  const userId = await getCurrentUserId();
+  if (!userId) {
+    redirect("/login");
   }
 
   const supabase = createAdminClient();
@@ -32,7 +25,7 @@ export default async function HealthPage() {
   const { data: albumRows } = await supabase
     .from("albums")
     .select("*")
-    .eq("user_id", devUserId)
+    .eq("user_id", userId)
     .order("created_at", { ascending: false });
   const albums = (albumRows ?? []) as Album[];
   const albumIds = albums.map((a) => a.id);

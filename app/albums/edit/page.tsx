@@ -1,5 +1,6 @@
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { getCurrentUserId } from "@/lib/auth/currentUser";
 import type { Album, Track } from "@/types/catalog";
 import EditAlbumForm from "./EditAlbumForm";
 
@@ -16,9 +17,19 @@ export default async function EditAlbumPage({
     notFound();
   }
 
+  const userId = await getCurrentUserId();
+  if (!userId) {
+    redirect("/login");
+  }
+
   const supabase = createAdminClient();
 
-  const { data: albumRow } = await supabase.from("albums").select("*").eq("id", id).maybeSingle();
+  const { data: albumRow } = await supabase
+    .from("albums")
+    .select("*")
+    .eq("id", id)
+    .eq("user_id", userId)
+    .maybeSingle();
   if (!albumRow) {
     notFound();
   }

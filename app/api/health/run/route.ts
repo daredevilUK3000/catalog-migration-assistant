@@ -1,17 +1,15 @@
 import { NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { getCurrentUserId } from "@/lib/auth/currentUser";
 import { runCatalogHealthCheck, findingKey } from "@/lib/catalogHealth";
 import type { Album, Track } from "@/types/catalog";
 
 export const runtime = "nodejs";
 
 export async function POST() {
-  const devUserId = process.env.DEV_USER_ID;
-  if (!devUserId) {
-    return NextResponse.json(
-      { error: "DEV_USER_ID is not configured on the server." },
-      { status: 500 }
-    );
+  const userId = await getCurrentUserId();
+  if (!userId) {
+    return NextResponse.json({ error: "Not signed in." }, { status: 401 });
   }
 
   const supabase = createAdminClient();
@@ -19,7 +17,7 @@ export async function POST() {
   const { data: albumRows, error: albumsError } = await supabase
     .from("albums")
     .select("*")
-    .eq("user_id", devUserId);
+    .eq("user_id", userId);
 
   if (albumsError) {
     return NextResponse.json(

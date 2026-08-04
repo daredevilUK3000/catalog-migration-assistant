@@ -1,5 +1,6 @@
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { getCurrentUserId } from "@/lib/auth/currentUser";
 import { buildExportPack, buildPasteQueue, type ExportRow } from "@/lib/exportPack";
 import type { Album, Track, DistributorProfile } from "@/types/catalog";
 import CopyQueueJsonButton from "./CopyQueueJsonButton";
@@ -17,9 +18,19 @@ export default async function ExportPage({
     notFound();
   }
 
+  const userId = await getCurrentUserId();
+  if (!userId) {
+    redirect("/login");
+  }
+
   const supabase = createAdminClient();
 
-  const { data: albumRow } = await supabase.from("albums").select("*").eq("id", id).maybeSingle();
+  const { data: albumRow } = await supabase
+    .from("albums")
+    .select("*")
+    .eq("id", id)
+    .eq("user_id", userId)
+    .maybeSingle();
   if (!albumRow) {
     notFound();
   }

@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { getCurrentUserId } from "@/lib/auth/currentUser";
+import { ownsAlbum } from "@/lib/auth/ownership";
 
 export const runtime = "nodejs";
 
@@ -9,6 +11,11 @@ export const runtime = "nodejs";
 // tracks.audio_file_url. No file bytes ever pass through this route; there
 // is nothing to sign or upload.
 export async function POST(request: NextRequest) {
+  const userId = await getCurrentUserId();
+  if (!userId) {
+    return NextResponse.json({ error: "Not signed in." }, { status: 401 });
+  }
+
   let raw: unknown;
   try {
     raw = await request.json();
@@ -41,6 +48,10 @@ export async function POST(request: NextRequest) {
   const value = reference === null ? null : reference.trim();
 
   const supabase = createAdminClient();
+  if (!(await ownsAlbum(supabase, albumId, userId))) {
+    return NextResponse.json({ error: "Album not found." }, { status: 404 });
+  }
+
   const { error } = await supabase
     .from("tracks")
     .update({ audio_file_url: value })

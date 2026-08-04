@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { getCurrentUserId } from "@/lib/auth/currentUser";
 
 export const runtime = "nodejs";
 
@@ -16,6 +17,11 @@ const ARTWORK_MIME_TO_EXT: Record<string, string> = {
 };
 
 export async function POST(request: NextRequest) {
+  const userId = await getCurrentUserId();
+  if (!userId) {
+    return NextResponse.json({ error: "Not signed in." }, { status: 401 });
+  }
+
   let raw: unknown;
   try {
     raw = await request.json();
@@ -60,6 +66,7 @@ export async function POST(request: NextRequest) {
     .from("albums")
     .select("id, user_id")
     .eq("id", albumId)
+    .eq("user_id", userId)
     .maybeSingle();
 
   if (albumError || !album) {

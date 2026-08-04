@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { renderToBuffer } from "@react-pdf/renderer";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { getCurrentUserId } from "@/lib/auth/currentUser";
 import type { Album, CatalogIssue, Track } from "@/types/catalog";
 import { MigrationReportDocument } from "@/lib/migrationReportPdf";
 
@@ -11,12 +12,9 @@ function slugify(text: string): string {
 }
 
 export async function GET(request: NextRequest) {
-  const devUserId = process.env.DEV_USER_ID;
-  if (!devUserId) {
-    return NextResponse.json(
-      { error: "DEV_USER_ID is not configured on the server." },
-      { status: 500 }
-    );
+  const userId = await getCurrentUserId();
+  if (!userId) {
+    return NextResponse.json({ error: "Not signed in." }, { status: 401 });
   }
 
   const albumId = request.nextUrl.searchParams.get("album_id");
@@ -28,7 +26,7 @@ export async function GET(request: NextRequest) {
       .from("albums")
       .select("*")
       .eq("id", albumId)
-      .eq("user_id", devUserId)
+      .eq("user_id", userId)
       .maybeSingle();
     if (error) {
       return NextResponse.json({ error: `Failed to load album: ${error.message}` }, { status: 502 });
@@ -41,7 +39,7 @@ export async function GET(request: NextRequest) {
     const { data: albumRows, error } = await supabase
       .from("albums")
       .select("*")
-      .eq("user_id", devUserId)
+      .eq("user_id", userId)
       .order("created_at", { ascending: false });
     if (error) {
       return NextResponse.json({ error: `Failed to load albums: ${error.message}` }, { status: 502 });

@@ -1,5 +1,6 @@
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { getCurrentUserId } from "@/lib/auth/currentUser";
 import type { Album, Track } from "@/types/catalog";
 import AttachFilesForm from "./AttachFilesForm";
 
@@ -13,12 +14,18 @@ export default async function AttachFilesPage({
     notFound();
   }
 
+  const userId = await getCurrentUserId();
+  if (!userId) {
+    redirect("/login");
+  }
+
   const supabase = createAdminClient();
 
   const { data: albumRow } = await supabase
     .from("albums")
     .select("*")
     .eq("id", id)
+    .eq("user_id", userId)
     .maybeSingle();
 
   if (!albumRow) {

@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import { Big_Shoulders, Inter, IBM_Plex_Mono } from "next/font/google";
 import Link from "next/link";
+import { createClient } from "@/lib/supabase/server";
+import SignOutButton from "@/components/SignOutButton";
 import "./globals.css";
 
 const bigShoulders = Big_Shoulders({
@@ -32,11 +34,19 @@ const NAV_LINKS = [
   { href: "/migrations", label: "Migration tracker" },
 ] as const;
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  // Real session only — DEV_USER_ID is a silent local-dev fallback baked
+  // into data access (lib/auth/currentUser.ts), not something the nav
+  // should pretend is a logged-in user.
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
   return (
     <html
       lang="en"
@@ -62,6 +72,21 @@ export default function RootLayout({
                   {link.label}
                 </Link>
               ))}
+            </div>
+            <div className="ml-auto flex items-center gap-4">
+              {user ? (
+                <>
+                  <span className="text-sm text-[var(--paper)]/60">{user.email}</span>
+                  <SignOutButton />
+                </>
+              ) : (
+                <Link
+                  href="/login"
+                  className="focus-ring text-sm font-medium text-[var(--paper)]/70 hover:text-[var(--brass-bright)] transition-colors"
+                >
+                  Sign in
+                </Link>
+              )}
             </div>
           </div>
         </nav>

@@ -27,6 +27,15 @@ chat conversation where this was designed).
   client variants. **Use `admin.ts` for server-side data fetching, and run
   sequential queries rather than relying on embedded joins** — that's bitten
   this pattern before on other projects in this portfolio.
+- `middleware.ts` + `lib/supabase/middleware.ts` — refreshes the Supabase
+  session cookie on every request (standard `@supabase/ssr` App Router
+  pattern); without it sessions would silently stop refreshing past
+  access-token expiry. `lib/auth/currentUser.ts`'s `getCurrentUserId()` is
+  how every page/route resolves "who's asking" (real session, or
+  `DEV_USER_ID` outside a production build); `lib/auth/ownership.ts`'s
+  `ownsAlbum()` is the one ownership check every album/track-touching route
+  calls before doing anything, since the admin client bypasses RLS and
+  enforces nothing by itself.
 - **Import flow** (`/import`): pick a source type, extract, then the same
   editable confirm table → save (`app/api/import/confirm`) for every path,
   writing `Album` + `Track` rows with `import_status = 'confirmed'`. Three
@@ -253,10 +262,10 @@ chat conversation where this was designed).
   default, `chrome.commands`, rebindable at `chrome://extensions/shortcuts`)
   copies the next field to the clipboard and advances, regardless of which
   window has focus — paste, hotkey, click next field, paste, repeat. v0 loads
-  data by pasting a JSON blob rather than fetching an API endpoint, since
-  this app has no real per-user auth yet (see the `DEV_USER_ID` note below) —
-  designing that just to authorize an extension fetch would be solving the
-  wrong problem first. Permissions are `storage`, `clipboardWrite`, and
+  data by pasting a JSON blob rather than fetching an API endpoint — wiring
+  the extension to authenticate and fetch from the app directly (now that
+  real per-user auth exists, see below) is a separate follow-up, not part of
+  adding login itself. Permissions are `storage`, `clipboardWrite`, and
   `offscreen` — one more than the feature conceptually needs
   (`clipboardWrite`/`commands`), for two forced reasons, not scope creep:
   MV3 service workers are killed after ~30s idle and lose all in-memory
@@ -271,9 +280,18 @@ chat conversation where this was designed).
   submits anything on the distributor's page — strictly a clipboard
   sequencer the musician drives by hand. See `extension/README.md` for
   load-unpacked steps.
-- **v0 auth stand-in:** no login flow yet. Every write goes through the
-  admin client and attributes the record to a single `DEV_USER_ID` (see
-  `.env.example`) — create that Supabase auth user once, by hand.
+- **Real login:** Supabase Auth, email + password (`/login`, `/signup`,
+  `lib/supabase/middleware.ts` + root `middleware.ts` for session refresh).
+  Every server-side page/route resolves the current user via
+  `lib/auth/currentUser.ts`'s `getCurrentUserId()` rather than trusting a
+  client-supplied id, and every route that touches an existing album/track
+  verifies ownership via `lib/auth/ownership.ts`'s `ownsAlbum()` before
+  reading or writing anything — the admin client (`lib/supabase/admin.ts`)
+  bypasses Postgres RLS entirely, so nothing else enforces that. `DEV_USER_ID`
+  (see `.env.example`) still works as a local-dev-only fallback identity —
+  `next dev` only, never a production build — so `npm run dev` needs no
+  login. It's not required anymore; sign up for a real account instead if
+  you don't want the dev stand-in.
 - Minimal app shell (`app/layout.tsx`, `app/page.tsx`, `app/globals.css`)
   so the project runs out of the box.
 

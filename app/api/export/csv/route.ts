@@ -1,11 +1,17 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { getCurrentUserId } from "@/lib/auth/currentUser";
 import { buildExportCsv } from "@/lib/exportPack";
 import type { Album, Track, DistributorProfile } from "@/types/catalog";
 
 export const runtime = "nodejs";
 
 export async function GET(request: NextRequest) {
+  const userId = await getCurrentUserId();
+  if (!userId) {
+    return NextResponse.json({ error: "Not signed in." }, { status: 401 });
+  }
+
   const albumId = request.nextUrl.searchParams.get("id");
   const slug = request.nextUrl.searchParams.get("distributor");
 
@@ -19,6 +25,7 @@ export async function GET(request: NextRequest) {
     .from("albums")
     .select("*")
     .eq("id", albumId)
+    .eq("user_id", userId)
     .maybeSingle();
   if (!albumRow) {
     return NextResponse.json({ error: "Album not found." }, { status: 404 });

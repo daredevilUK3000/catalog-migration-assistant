@@ -47,7 +47,7 @@ export async function uploadArtworkFile({ albumId, file }: UploadArtworkFilePara
   const attachRes = await fetch("/api/files/attach", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ album_id: albumId, bucket: signBody.bucket, path: signBody.path }),
+    body: JSON.stringify({ album_id: albumId, path: signBody.path }),
   });
   const attachBody = await attachRes.json();
   if (!attachRes.ok) {

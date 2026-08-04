@@ -1,6 +1,7 @@
 import Link from "next/link";
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { getCurrentUserId } from "@/lib/auth/currentUser";
 import type { Album, CatalogIssue, Track } from "@/types/catalog";
 import { computeAlbumScore, computeCatalogScore, buildPreflightSteps } from "@/lib/migrationScore";
 import PreflightAnimation from "./PreflightAnimation";
@@ -15,18 +16,9 @@ export default async function PreflightPage({
   searchParams: Promise<{ album_id?: string }>;
 }) {
   const { album_id } = await searchParams;
-  const devUserId = process.env.DEV_USER_ID;
-
-  if (!devUserId) {
-    return (
-      <main className="min-h-screen bg-neutral-50 px-6 py-10">
-        <div className="mx-auto max-w-3xl">
-          <p className="text-red-600">
-            DEV_USER_ID is not configured. Set it in .env.local to use the catalog dashboard.
-          </p>
-        </div>
-      </main>
-    );
+  const userId = await getCurrentUserId();
+  if (!userId) {
+    redirect("/login");
   }
 
   const supabase = createAdminClient();
@@ -37,7 +29,7 @@ export default async function PreflightPage({
       .from("albums")
       .select("*")
       .eq("id", album_id)
-      .eq("user_id", devUserId)
+      .eq("user_id", userId)
       .maybeSingle();
     if (!albumRow) notFound();
     albums = [albumRow as Album];
@@ -45,7 +37,7 @@ export default async function PreflightPage({
     const { data: albumRows } = await supabase
       .from("albums")
       .select("*")
-      .eq("user_id", devUserId)
+      .eq("user_id", userId)
       .order("created_at", { ascending: false });
     albums = (albumRows ?? []) as Album[];
   }

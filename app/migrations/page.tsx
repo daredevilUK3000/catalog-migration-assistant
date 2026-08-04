@@ -1,5 +1,7 @@
 import Link from "next/link";
+import { redirect } from "next/navigation";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { getCurrentUserId } from "@/lib/auth/currentUser";
 import type { Album, MigrationRecord, DistributorProfile } from "@/types/catalog";
 import MigrationRow from "./MigrationRow";
 
@@ -8,18 +10,9 @@ import MigrationRow from "./MigrationRow";
 export const dynamic = "force-dynamic";
 
 export default async function MigrationsPage() {
-  const devUserId = process.env.DEV_USER_ID;
-
-  if (!devUserId) {
-    return (
-      <main className="min-h-screen bg-neutral-50 px-6 py-10">
-        <div className="mx-auto max-w-3xl">
-          <p className="text-red-600">
-            DEV_USER_ID is not configured. Set it in .env.local to use the migration tracker.
-          </p>
-        </div>
-      </main>
-    );
+  const userId = await getCurrentUserId();
+  if (!userId) {
+    redirect("/login");
   }
 
   const supabase = createAdminClient();
@@ -27,7 +20,7 @@ export default async function MigrationsPage() {
   const { data: albumRows } = await supabase
     .from("albums")
     .select("*")
-    .eq("user_id", devUserId)
+    .eq("user_id", userId)
     .order("created_at", { ascending: false });
   const albums = (albumRows ?? []) as Album[];
   const albumIds = albums.map((a) => a.id);

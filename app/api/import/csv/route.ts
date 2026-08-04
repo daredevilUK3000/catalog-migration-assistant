@@ -1,11 +1,17 @@
 import { NextRequest, NextResponse } from "next/server";
 import { parseCatalogSpreadsheet } from "@/lib/importCsv";
+import { getCurrentUserId } from "@/lib/auth/currentUser";
 
 export const runtime = "nodejs";
 
 const MAX_FILE_BYTES = 5 * 1024 * 1024;
 
 export async function POST(request: NextRequest) {
+  const userId = await getCurrentUserId();
+  if (!userId) {
+    return NextResponse.json({ error: "Not signed in." }, { status: 401 });
+  }
+
   let formData: FormData;
   try {
     formData = await request.formData();

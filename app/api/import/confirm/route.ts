@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { getCurrentUserId } from "@/lib/auth/currentUser";
 
 export const runtime = "nodejs";
 
@@ -55,15 +56,9 @@ function parseBody(raw: unknown): ConfirmImportBody | null {
 }
 
 export async function POST(request: NextRequest) {
-  const devUserId = process.env.DEV_USER_ID;
-  if (!devUserId) {
-    return NextResponse.json(
-      {
-        error:
-          "DEV_USER_ID is not configured on the server. Create a Supabase auth user and set DEV_USER_ID in .env.local.",
-      },
-      { status: 500 }
-    );
+  const userId = await getCurrentUserId();
+  if (!userId) {
+    return NextResponse.json({ error: "Not signed in." }, { status: 401 });
   }
 
   let raw: unknown;
@@ -89,7 +84,7 @@ export async function POST(request: NextRequest) {
   const { data: album, error: albumError } = await supabase
     .from("albums")
     .insert({
-      user_id: devUserId,
+      user_id: userId,
       title: body.title,
       artist: body.artist,
       release_date: body.release_date,

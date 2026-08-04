@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { getCurrentUserId } from "@/lib/auth/currentUser";
+import { ownsAlbum } from "@/lib/auth/ownership";
 import type { MigrationRecord, MigrationStatus, TakedownStatus } from "@/types/catalog";
 
 export const runtime = "nodejs";
@@ -20,6 +22,11 @@ const VALID_TAKEDOWN_STATUSES: TakedownStatus[] = [
 ];
 
 export async function POST(request: NextRequest) {
+  const userId = await getCurrentUserId();
+  if (!userId) {
+    return NextResponse.json({ error: "Not signed in." }, { status: 401 });
+  }
+
   let raw: unknown;
   try {
     raw = await request.json();
@@ -60,6 +67,9 @@ export async function POST(request: NextRequest) {
     .eq("id", id)
     .maybeSingle();
   if (fetchError || !existing) {
+    return NextResponse.json({ error: "Migration record not found." }, { status: 404 });
+  }
+  if (!(await ownsAlbum(supabase, existing.album_id, userId))) {
     return NextResponse.json({ error: "Migration record not found." }, { status: 404 });
   }
 

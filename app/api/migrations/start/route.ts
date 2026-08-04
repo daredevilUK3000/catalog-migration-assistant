@@ -1,10 +1,16 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { getCurrentUserId } from "@/lib/auth/currentUser";
 import type { MigrationRecord } from "@/types/catalog";
 
 export const runtime = "nodejs";
 
 export async function POST(request: NextRequest) {
+  const userId = await getCurrentUserId();
+  if (!userId) {
+    return NextResponse.json({ error: "Not signed in." }, { status: 401 });
+  }
+
   let raw: unknown;
   try {
     raw = await request.json();
@@ -34,6 +40,7 @@ export async function POST(request: NextRequest) {
     .from("albums")
     .select("id")
     .eq("id", albumId)
+    .eq("user_id", userId)
     .maybeSingle();
   if (albumError || !album) {
     return NextResponse.json({ error: "Album not found." }, { status: 404 });
