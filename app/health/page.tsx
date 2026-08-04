@@ -8,6 +8,7 @@ import { ScoreBadge, ScoreProgressBar } from "./scoreDisplay";
 import RunHealthCheckButton from "./RunHealthCheckButton";
 import DeleteAlbumButton from "./DeleteAlbumButton";
 import GenerateReportButton from "./GenerateReportButton";
+import DownloadBackupButton from "./DownloadBackupButton";
 import PageHeader from "@/components/ui/PageHeader";
 import Card from "@/components/ui/Card";
 import Badge from "@/components/ui/Badge";
@@ -88,6 +89,7 @@ export default async function HealthPage() {
                 Preflight check
               </Link>
               {albums.length > 0 && <GenerateReportButton label="Generate report" />}
+              {albums.length > 0 && <DownloadBackupButton />}
               <RunHealthCheckButton />
             </>
           }
