@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Big_Shoulders, Inter, IBM_Plex_Mono } from "next/font/google";
 import Link from "next/link";
+import LogoMark from "@/components/LogoMark";
 import { createClient } from "@/lib/supabase/server";
 import SignOutButton from "@/components/SignOutButton";
 import "./globals.css";
@@ -23,13 +24,12 @@ const plexMono = IBM_Plex_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Catalog Migration Assistant",
+  title: "OwnYourMusic",
   description: "Own your catalog. Switch distributors in hours, not weeks.",
 };
 
 const NAV_LINKS = [
   { href: "/", label: "Home" },
-  { href: "/getting-started", label: "Getting started" },
   { href: "/import", label: "Import" },
   { href: "/health", label: "Catalog health" },
   { href: "/migrations", label: "Migration tracker" },
@@ -54,14 +54,15 @@ export default async function RootLayout({
       className={`${bigShoulders.variable} ${inter.variable} ${plexMono.variable}`}
     >
       <body className="font-sans" style={{ fontFamily: "var(--font-body)" }}>
-        <nav className="sticky top-0 z-50 border-b border-paper/10 bg-ink-deep/90 backdrop-blur-sm px-6 py-3">
+        <nav className="sticky top-0 z-50 border-b border-paper/10 bg-ink-deep/90 backdrop-blur-sm px-6 py-6">
           <div className="mx-auto flex max-w-6xl items-center gap-8">
             <Link
               href="/"
-              className="font-display font-bold text-paper tracking-wide"
+              className="flex items-center gap-4 font-display font-bold text-paper tracking-wide text-6xl"
               style={{ fontFamily: "var(--font-display)" }}
             >
-              CMA
+              <LogoMark size={160} />
+              OwnYourMusic
             </Link>
             <div className="flex items-center gap-6">
               {NAV_LINKS.slice(1).map((link) => (

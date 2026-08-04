@@ -82,7 +82,7 @@ export default function HowItWorksSection() {
           </div>
           <div className="rounded-lg border border-brass/30 bg-brass/[0.06] p-6">
             <p className="text-xs uppercase tracking-[0.2em] font-mono text-ink mb-4">
-              With Catalog Migration Assistant
+              With OwnYourMusic
             </p>
             <ul className="space-y-3 text-sm leading-relaxed">
               {NEW_WAY.map((line) => (

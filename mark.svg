@@ -1,0 +1,10 @@
+<svg width="200" height="200" viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+  <rect width="200" height="200" rx="36" fill="#0a1112"/>
+  <circle cx="100" cy="100" r="70" fill="none" stroke="#c89b3c" stroke-opacity="0.35" stroke-width="3"/>
+  <circle cx="100" cy="100" r="52" fill="none" stroke="#c89b3c" stroke-opacity="0.55" stroke-width="3"/>
+  <circle cx="100" cy="100" r="34" fill="none" stroke="#e0b559" stroke-width="3.5"/>
+  <circle cx="100" cy="100" r="10" fill="#e0b559"/>
+  <!-- migration cue: a groove breaking outward, top-right -->
+  <path d="M 134 66 L 156 44" stroke="#e0b559" stroke-width="4" stroke-linecap="round"/>
+  <path d="M 156 44 L 156 58 M 156 44 L 142 44" stroke="#e0b559" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+</svg>

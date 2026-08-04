@@ -75,7 +75,7 @@ export default function Hero() {
       {/* Headline content */}
       <div className="relative z-10 h-full flex flex-col items-center justify-center px-6 text-center">
         <p className="text-xs sm:text-sm uppercase tracking-[0.3em] text-brass-bright font-mono mb-4">
-          Catalog Migration Assistant
+          OwnYourMusic
         </p>
         <h1 className="font-display text-4xl sm:text-6xl lg:text-7xl font-bold text-paper leading-[1.05] max-w-4xl">
           Own your catalog.
