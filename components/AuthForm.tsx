@@ -52,7 +52,7 @@ export default function AuthForm({ mode }: { mode: Mode }) {
       return;
     }
 
-    router.push("/health");
+    router.push(mode === "signup" ? "/getting-started" : "/health");
     router.refresh();
   }
 

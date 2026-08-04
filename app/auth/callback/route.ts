@@ -15,7 +15,11 @@ export const runtime = "nodejs";
 export async function GET(request: NextRequest) {
   const { searchParams, origin } = new URL(request.url);
   const code = searchParams.get("code");
-  const next = searchParams.get("next") ?? "/health";
+  // Signup confirmation is the only flow that lands here right now, so
+  // defaulting to the onboarding page is safe — a future email flow that
+  // isn't a first-time signup (password reset, magic link) should pass its
+  // own explicit ?next= rather than relying on this default.
+  const next = searchParams.get("next") ?? "/getting-started";
 
   if (code) {
     const supabase = await createClient();
