@@ -2,6 +2,7 @@ import Hero from "@/components/Hero";
 import HowItWorksSection from "@/components/HowItWorksSection";
 import FeatureSection from "@/components/FeatureSection";
 import TrustSection from "@/components/TrustSection";
+import IsrcCheckerDemo from "@/components/IsrcCheckerDemo";
 import Footer from "@/components/Footer";
 import ImportVisual from "@/components/visuals/ImportVisual";
 import HealthVisual from "@/components/visuals/HealthVisual";
@@ -16,7 +17,7 @@ export default function Home() {
       <HowItWorksSection />
 
       <div className="relative">
-        <VinylRings className="pointer-events-none absolute -top-20 -right-32 w-[500px] h-[500px] text-[var(--ink)]" />
+        <VinylRings className="ambient-spin pointer-events-none absolute -top-20 -right-32 w-[500px] h-[500px] text-ink" />
         <FeatureSection
           eyebrow="Step 1 — Universal Import"
           title="Upload a screenshot. Get a structured catalog."
@@ -27,7 +28,7 @@ export default function Home() {
       </div>
 
       <div className="relative">
-        <WaveformLine className="pointer-events-none absolute inset-x-0 top-0 w-full h-24 text-[var(--paper)]" />
+        <WaveformLine className="pointer-events-none absolute inset-x-0 top-0 w-full h-24 text-paper" />
         <FeatureSection
           eyebrow="Step 2 — Catalog Health"
           title="Know what's wrong before a distributor tells you."
@@ -41,7 +42,7 @@ export default function Home() {
       <FeatureSection
         eyebrow="Step 3 — Distributor Export Packs"
         title="One master catalog. Any distributor's format."
-        description="Bulk CSV where it's supported, a copy-paste-ready reference sheet where it isn't — mapped exactly to how each distributor expects it."
+        description="Bulk import where it's supported. Where it isn't, your paste queue moves you straight down the new distributor's form — no hunting, no retyping an ISRC by hand."
         visual={<ExportVisual />}
         tint="paper"
       />
@@ -55,6 +56,7 @@ export default function Home() {
         reverse
       />
 
+      <IsrcCheckerDemo />
       <TrustSection />
       <Footer />
     </main>

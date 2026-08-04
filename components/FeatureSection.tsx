@@ -13,9 +13,9 @@ interface FeatureSectionProps {
 }
 
 const tintClasses: Record<FeatureSectionProps["tint"], string> = {
-  ink: "bg-[var(--ink)] text-[var(--paper)]",
-  paper: "bg-[var(--paper)] text-[var(--ink)]",
-  forest: "bg-[var(--forest)] text-[var(--paper)]",
+  ink: "bg-ink text-paper",
+  paper: "bg-paper text-ink",
+  forest: "bg-forest text-paper",
 };
 
 export default function FeatureSection({

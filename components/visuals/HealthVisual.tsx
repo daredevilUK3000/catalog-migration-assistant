@@ -14,7 +14,7 @@ export default function HealthVisual() {
 
   return (
     <div ref={ref} className="w-full max-w-md mx-auto">
-      <div className="rounded-lg border border-[var(--paper-warm)]/20 bg-[var(--ink-deep)] p-5">
+      <div className="rounded-lg border border-paper-warm/20 bg-ink-deep p-5">
         {/* Needle gauge */}
         <div className="relative h-24 mb-4">
           <svg viewBox="0 0 200 100" className="w-full h-full">
@@ -53,7 +53,7 @@ export default function HealthVisual() {
           {rows.map((r, i) => (
             <div
               key={r.label}
-              className="flex items-center gap-2 text-sm text-[var(--paper)] transition-all duration-500"
+              className="flex items-center gap-2 text-sm text-paper transition-all duration-500"
               style={{
                 opacity: inView ? 1 : 0,
                 transform: inView ? "translateX(0)" : "translateX(-8px)",
@@ -63,8 +63,8 @@ export default function HealthVisual() {
               <span
                 className={
                   r.ok
-                    ? "text-[var(--brass-bright)]"
-                    : "text-[var(--rust)]"
+                    ? "text-brass-bright"
+                    : "text-rust"
                 }
               >
                 {r.ok ? "✓" : "⚠"}

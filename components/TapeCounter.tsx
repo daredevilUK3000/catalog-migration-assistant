@@ -49,7 +49,7 @@ export default function TapeCounter({ value, label, digits }: TapeCounterProps) 
         ))}
       </div>
       <span className="sr-only">{value}</span>
-      <span className="text-xs uppercase tracking-[0.2em] text-[var(--paper-warm)]/70 font-medium">
+      <span className="text-xs uppercase tracking-[0.2em] text-paper-warm/70 font-medium">
         {label}
       </span>
     </div>

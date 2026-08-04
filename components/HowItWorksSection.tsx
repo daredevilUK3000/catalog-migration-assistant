@@ -16,7 +16,7 @@ const STEPS = [
   {
     n: "03",
     title: "Export in their format",
-    body: "Bulk CSV where the new distributor supports it, a copy-paste-ready reference sheet where it doesn't — fields in the exact order their form asks for them.",
+    body: "Bulk import where the new distributor supports it. Where it doesn't, you're never hunting for data or retyping an ISRC by hand — just paste, paste, paste, straight down their form.",
   },
 ];
 
@@ -38,7 +38,7 @@ export default function HowItWorksSection() {
   const { ref, inView } = useInView<HTMLDivElement>(0.15);
 
   return (
-    <section className="bg-[var(--paper)] text-[var(--ink)] relative overflow-hidden">
+    <section className="bg-paper text-ink relative overflow-hidden">
       <div
         ref={ref}
         className={`reveal ${inView ? "in-view" : ""} mx-auto max-w-6xl px-6 py-20 md:py-28`}
@@ -54,7 +54,7 @@ export default function HowItWorksSection() {
         <div className="mt-16 grid md:grid-cols-3 gap-8">
           {STEPS.map((s) => (
             <div key={s.n} className="relative">
-              <span className="font-mono text-5xl font-bold text-[var(--brass)]/30">
+              <span className="font-mono text-5xl font-bold text-brass/30">
                 {s.n}
               </span>
               <h3 className="font-display text-xl font-semibold mt-2 mb-2">
@@ -67,27 +67,27 @@ export default function HowItWorksSection() {
 
         {/* Before / after comparison */}
         <div className="mt-20 grid md:grid-cols-2 gap-6">
-          <div className="rounded-lg border border-[var(--rust)]/25 bg-[var(--rust)]/[0.04] p-6">
-            <p className="text-xs uppercase tracking-[0.2em] font-mono text-[var(--rust)] mb-4">
+          <div className="rounded-lg border border-rust/25 bg-rust/[0.04] p-6">
+            <p className="text-xs uppercase tracking-[0.2em] font-mono text-rust mb-4">
               Without this tool
             </p>
             <ul className="space-y-3 text-sm leading-relaxed">
               {OLD_WAY.map((line) => (
                 <li key={line} className="flex gap-2">
-                  <span className="text-[var(--rust)]">–</span>
+                  <span className="text-rust">–</span>
                   <span className="opacity-80">{line}</span>
                 </li>
               ))}
             </ul>
           </div>
-          <div className="rounded-lg border border-[var(--brass)]/30 bg-[var(--brass)]/[0.06] p-6">
-            <p className="text-xs uppercase tracking-[0.2em] font-mono text-[var(--ink)] mb-4">
+          <div className="rounded-lg border border-brass/30 bg-brass/[0.06] p-6">
+            <p className="text-xs uppercase tracking-[0.2em] font-mono text-ink mb-4">
               With Catalog Migration Assistant
             </p>
             <ul className="space-y-3 text-sm leading-relaxed">
               {NEW_WAY.map((line) => (
                 <li key={line} className="flex gap-2">
-                  <span className="text-[var(--brass)] font-semibold">✓</span>
+                  <span className="text-brass font-semibold">✓</span>
                   <span className="opacity-90">{line}</span>
                 </li>
               ))}

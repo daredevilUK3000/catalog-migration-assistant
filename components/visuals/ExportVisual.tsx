@@ -11,10 +11,10 @@ export default function ExportVisual() {
       <div className="flex items-center gap-3">
         {/* Master reel */}
         <div className="flex flex-col items-center gap-1 shrink-0">
-          <div className="h-16 w-16 rounded-full border-4 border-[var(--brass)] flex items-center justify-center bg-[var(--ink)]">
-            <div className="h-4 w-4 rounded-full bg-[var(--brass-bright)]" />
+          <div className="h-16 w-16 rounded-full border-4 border-brass flex items-center justify-center bg-ink">
+            <div className="h-4 w-4 rounded-full bg-brass-bright" />
           </div>
-          <span className="text-[10px] uppercase tracking-wider text-[var(--ink)]/60">
+          <span className="text-[10px] uppercase tracking-wider text-ink/60">
             Master
           </span>
         </div>
@@ -50,7 +50,7 @@ export default function ExportVisual() {
           {targets.map((t, i) => (
             <div
               key={t}
-              className="rounded border border-[var(--ink)]/15 bg-white px-3 py-1 text-xs font-medium shadow-sm transition-all duration-500"
+              className="rounded border border-ink/15 bg-white px-3 py-1 text-xs font-medium shadow-sm transition-all duration-500"
               style={{
                 opacity: inView ? 1 : 0,
                 transform: inView ? "translateX(0)" : "translateX(8px)",
