@@ -1,4 +1,9 @@
 import Link from "next/link";
+import PageHeader from "@/components/ui/PageHeader";
+import Card from "@/components/ui/Card";
+
+const LINK_BUTTON_PRIMARY =
+  "focus-ring inline-flex items-center justify-center gap-2 rounded-md px-5 py-2.5 text-sm font-semibold transition-colors bg-brass text-ink-deep hover:bg-brass-bright";
 
 const BENEFITS = [
   {
@@ -57,67 +62,60 @@ const STEPS = [
 
 export default function GettingStartedPage() {
   return (
-    <main className="min-h-screen bg-neutral-50 px-6 py-10">
+    <main className="min-h-screen bg-paper px-6 py-10">
       <div className="mx-auto max-w-3xl space-y-10">
-        <div>
-          <h1 className="text-2xl font-semibold text-neutral-900">Getting started</h1>
-          <p className="mt-1 text-neutral-600">
-            A permanent, distributor-independent copy of your catalog — here's how to build it.
-          </p>
-        </div>
+        <PageHeader
+          title="Getting started"
+          description="A permanent, distributor-independent copy of your catalog — here's how to build it."
+        />
 
         <div className="space-y-4">
-          <h2 className="text-sm font-medium uppercase tracking-wide text-neutral-500">
-            Why this matters
-          </h2>
+          <h2 className="text-sm font-medium uppercase tracking-wide text-ink/50">Why this matters</h2>
           <div className="grid gap-4 sm:grid-cols-2">
             {BENEFITS.map((b) => (
-              <div key={b.title} className="rounded-lg border border-neutral-200 bg-white p-5">
-                <h3 className="text-sm font-semibold text-neutral-900">{b.title}</h3>
-                <p className="mt-1 text-sm text-neutral-600">{b.body}</p>
-              </div>
+              <Card key={b.title} className="p-5">
+                <h3 className="text-sm font-semibold text-ink">{b.title}</h3>
+                <p className="mt-1 text-sm text-ink/60">{b.body}</p>
+              </Card>
             ))}
           </div>
         </div>
 
         <div className="space-y-4">
-          <h2 className="text-sm font-medium uppercase tracking-wide text-neutral-500">
-            Your six steps
-          </h2>
+          <h2 className="text-sm font-medium uppercase tracking-wide text-ink/50">Your six steps</h2>
           <ol className="space-y-4">
             {STEPS.map((s) => (
-              <li key={s.n} className="rounded-lg border border-neutral-200 bg-white p-5">
-                <div className="flex items-start gap-4">
-                  <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-neutral-900 text-sm font-medium text-white">
-                    {s.n}
-                  </span>
-                  <div className="min-w-0 flex-1">
-                    <h3 className="text-sm font-semibold text-neutral-900">{s.title}</h3>
-                    <p className="mt-1 text-sm text-neutral-600">{s.body}</p>
-                    {s.cta && (
-                      <Link
-                        href={s.cta.href}
-                        className="mt-2 inline-block text-sm font-medium text-neutral-900 underline"
-                      >
-                        {s.cta.label} →
-                      </Link>
-                    )}
+              <li key={s.n}>
+                <Card className="p-5">
+                  <div className="flex items-start gap-4">
+                    <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-brass text-sm font-medium text-ink-deep">
+                      {s.n}
+                    </span>
+                    <div className="min-w-0 flex-1">
+                      <h3 className="text-sm font-semibold text-ink">{s.title}</h3>
+                      <p className="mt-1 text-sm text-ink/60">{s.body}</p>
+                      {s.cta && (
+                        <Link
+                          href={s.cta.href}
+                          className="mt-2 inline-block text-sm font-medium text-ink underline hover:text-brass"
+                        >
+                          {s.cta.label} →
+                        </Link>
+                      )}
+                    </div>
                   </div>
-                </div>
+                </Card>
               </li>
             ))}
           </ol>
         </div>
 
-        <div className="rounded-lg border border-neutral-200 bg-white p-6 text-center">
-          <p className="text-neutral-700">Ready to bring in your first release?</p>
-          <Link
-            href="/import"
-            className="mt-3 inline-block rounded-md bg-neutral-900 px-5 py-2.5 text-sm font-medium text-white"
-          >
+        <Card className="p-6 text-center">
+          <p className="text-ink/70">Ready to bring in your first release?</p>
+          <Link href="/import" className={`mt-3 ${LINK_BUTTON_PRIMARY}`}>
             Import your first release
           </Link>
-        </div>
+        </Card>
       </div>
     </main>
   );

@@ -12,6 +12,22 @@
   --brass-bright: #e0b559;
   --rust: #9c4b33;
   --thread: rgba(237, 234, 224, 0.14);
+
+  /* RGB-channel twins of the above, for tailwind.config.ts's ink/paper/
+     brass/rust color tokens. Tailwind can't apply an opacity modifier
+     (e.g. bg-[var(--ink)]/90) to a bare hex custom property — it silently
+     drops the whole rule rather than falling back to the opaque color, so
+     every such class across the app was rendering as if it didn't exist.
+     Tailwind's documented fix is a color of the form
+     rgb(var(--x-rgb) / <alpha-value>), which does support opacity — hence
+     these channel values existing alongside the hex ones above. */
+  --ink-rgb: 16 25 26;
+  --ink-deep-rgb: 10 17 18;
+  --paper-rgb: 237 234 224;
+  --paper-warm-rgb: 229 224 210;
+  --brass-rgb: 200 155 60;
+  --brass-bright-rgb: 224 181 89;
+  --rust-rgb: 156 75 51;
 }
 
 html {

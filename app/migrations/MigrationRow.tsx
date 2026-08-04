@@ -9,6 +9,7 @@ import type {
   MigrationStatus,
   TakedownStatus,
 } from "@/types/catalog";
+import Button from "@/components/ui/Button";
 
 const STATUS_STEPS: { value: MigrationStatus; label: string }[] = [
   { value: "imported", label: "Imported" },
@@ -46,8 +47,8 @@ export default function MigrationRow({
 }) {
   return (
     <div className="space-y-4">
-      <p className="font-medium text-neutral-900">
-        {album.title} <span className="font-normal text-neutral-500">— {album.artist}</span>
+      <p className="font-medium text-ink">
+        {album.title} <span className="font-normal text-ink/50">— {album.artist}</span>
       </p>
 
       {records.map((record) => (
@@ -113,14 +114,14 @@ function StartMigrationForm({
   return (
     <form
       onSubmit={handleStart}
-      className={`flex flex-wrap items-end gap-3 ${hasExisting ? "border-t border-neutral-100 pt-4" : ""}`}
+      className={`flex flex-wrap items-end gap-3 ${hasExisting ? "border-t border-ink/10 pt-4" : ""}`}
     >
       <label className="text-sm">
-        <span className="block text-neutral-700">Source (optional)</span>
+        <span className="block text-ink/70">Source (optional)</span>
         <select
           value={sourceSlug}
           onChange={(e) => setSourceSlug(e.target.value)}
-          className="mt-1 rounded border border-neutral-300 px-2 py-1.5"
+          className="mt-1 rounded border border-ink/20 px-2 py-1.5"
         >
           <option value="">—</option>
           {profiles.map((p) => (
@@ -131,11 +132,11 @@ function StartMigrationForm({
         </select>
       </label>
       <label className="text-sm">
-        <span className="block text-neutral-700">Target</span>
+        <span className="block text-ink/70">Target</span>
         <select
           value={targetSlug}
           onChange={(e) => setTargetSlug(e.target.value)}
-          className="mt-1 rounded border border-neutral-300 px-2 py-1.5"
+          className="mt-1 rounded border border-ink/20 px-2 py-1.5"
         >
           <option value="" disabled>
             Choose…
@@ -147,14 +148,10 @@ function StartMigrationForm({
           ))}
         </select>
       </label>
-      <button
-        type="submit"
-        disabled={starting}
-        className="rounded-md bg-neutral-900 px-4 py-2 text-sm font-medium text-white disabled:opacity-50"
-      >
+      <Button type="submit" disabled={starting}>
         {starting ? "Starting…" : hasExisting ? "Track another target" : "Start tracking"}
-      </button>
-      {error && <p className="w-full text-sm text-red-600">{error}</p>}
+      </Button>
+      {error && <p className="w-full text-sm text-rust">{error}</p>}
     </form>
   );
 }
@@ -200,12 +197,16 @@ function MigrationRecordControls({
   const verifiedAt = formatDate(record.verified_at);
 
   return (
-    <div className="space-y-2 border-t border-neutral-100 pt-4">
-      <p className="text-sm text-neutral-700">
+    <div className="space-y-2 border-t border-ink/10 pt-4">
+      <p className="text-sm text-ink/70">
         {sourceName ?? "Unknown source"} →{" "}
         <span className="font-medium">{targetName ?? "Unknown target"}</span>
       </p>
 
+      {/* A 3-state pill row (current / already passed / not yet reached) —
+          kept as hand-styled buttons rather than <SegmentedControl>, which
+          only distinguishes active vs. inactive and would lose the
+          already-passed-vs-future distinction this needs. */}
       <div className="flex flex-wrap items-center gap-2">
         {STATUS_STEPS.map((step, i) => (
           <button
@@ -215,10 +216,10 @@ function MigrationRecordControls({
             onClick={() => update({ status: step.value })}
             className={`rounded-full px-3 py-1 text-xs font-medium disabled:opacity-50 ${
               step.value === record.status
-                ? "bg-neutral-900 text-white"
+                ? "bg-ink text-paper"
                 : i <= currentStepIndex
-                  ? "bg-neutral-200 text-neutral-700"
-                  : "bg-neutral-100 text-neutral-400"
+                  ? "bg-brass/15 text-brass"
+                  : "bg-ink/[0.05] text-ink/30"
             }`}
           >
             {step.label}
@@ -227,12 +228,12 @@ function MigrationRecordControls({
       </div>
 
       <label className="flex items-center gap-2 text-sm">
-        <span className="text-neutral-500">Takedown at source:</span>
+        <span className="text-ink/50">Takedown at source:</span>
         <select
           value={record.takedown_status}
           disabled={saving}
           onChange={(e) => update({ takedown_status: e.target.value as TakedownStatus })}
-          className="rounded border border-neutral-300 px-2 py-1"
+          className="rounded border border-ink/20 px-2 py-1"
         >
           {TAKEDOWN_STEPS.map((step) => (
             <option key={step.value} value={step.value}>
@@ -243,14 +244,14 @@ function MigrationRecordControls({
       </label>
 
       {(uploadedAt || verifiedAt) && (
-        <p className="text-xs text-neutral-500">
+        <p className="text-xs text-ink/50">
           {uploadedAt && `Uploaded ${uploadedAt}`}
           {uploadedAt && verifiedAt && " · "}
           {verifiedAt && `Verified ${verifiedAt}`}
         </p>
       )}
 
-      {error && <p className="text-sm text-red-600">{error}</p>}
+      {error && <p className="text-sm text-rust">{error}</p>}
     </div>
   );
 }

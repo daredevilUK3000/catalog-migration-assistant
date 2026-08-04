@@ -35,15 +35,18 @@ export default function DeleteAlbumButton({ albumId, title }: { albumId: string;
 
   return (
     <span>
+      {/* Plain button, not <Button> — sits inline in a row of plain text
+          links (Preflight, Edit, Attach files, Export pack); Button's pill
+          padding would look out of place next to those. */}
       <button
         type="button"
         onClick={handleDelete}
         disabled={deleting}
-        className="text-red-700 underline disabled:opacity-50"
+        className="text-rust underline disabled:opacity-50"
       >
         {deleting ? "Deleting…" : "Delete"}
       </button>
-      {error && <p className="mt-1 text-sm text-red-600">{error}</p>}
+      {error && <p className="mt-1 text-sm text-rust">{error}</p>}
     </span>
   );
 }

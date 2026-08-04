@@ -1,38 +1,42 @@
 import type { ScoreBand } from "@/lib/migrationScore";
 import { BAND_LABEL } from "@/lib/migrationScore";
+import Badge from "@/components/ui/Badge";
 
 // Shared, no "use client" needed — pure presentational pieces used by both
 // the server-rendered /health dashboard and the client-side Preflight
 // animation.
 
-export function bandColors(band: ScoreBand): { text: string; bg: string; bar: string } {
+function bandTone(band: ScoreBand): "success" | "warning" | "danger" {
   switch (band) {
     case "ready":
-      return { text: "text-emerald-700", bg: "bg-emerald-50", bar: "bg-emerald-500" };
+      return "success";
     case "needs_attention":
-      return { text: "text-amber-700", bg: "bg-amber-50", bar: "bg-amber-500" };
+      return "warning";
     case "not_ready":
-      return { text: "text-red-700", bg: "bg-red-50", bar: "bg-red-500" };
+      return "danger";
+  }
+}
+
+function bandBarColor(band: ScoreBand): string {
+  switch (band) {
+    case "ready":
+      return "bg-brass";
+    case "needs_attention":
+      return "bg-rust/70";
+    case "not_ready":
+      return "bg-rust";
   }
 }
 
 export function ScoreBadge({ band }: { band: ScoreBand }) {
-  const colors = bandColors(band);
-  return (
-    <span
-      className={`inline-flex items-center rounded-full px-3 py-1 text-sm font-medium ${colors.bg} ${colors.text}`}
-    >
-      {BAND_LABEL[band]}
-    </span>
-  );
+  return <Badge tone={bandTone(band)}>{BAND_LABEL[band]}</Badge>;
 }
 
 export function ScoreProgressBar({ score, band }: { score: number; band: ScoreBand }) {
-  const colors = bandColors(band);
   return (
-    <div className="h-2.5 w-full overflow-hidden rounded-full bg-neutral-200">
+    <div className="h-2.5 w-full overflow-hidden rounded-full bg-ink/10">
       <div
-        className={`h-full rounded-full ${colors.bar} transition-all duration-700 ease-out`}
+        className={`h-full rounded-full ${bandBarColor(band)} transition-all duration-700 ease-out`}
         style={{ width: `${Math.max(0, Math.min(100, score))}%` }}
       />
     </div>

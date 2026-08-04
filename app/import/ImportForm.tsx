@@ -4,6 +4,10 @@ import { useRef, useState } from "react";
 import Link from "next/link";
 import type { ExtractedAlbumDraft } from "@/types/catalog";
 import ConfirmAlbumForm from "./ConfirmAlbumForm";
+import PageHeader from "@/components/ui/PageHeader";
+import Card from "@/components/ui/Card";
+import Button from "@/components/ui/Button";
+import SegmentedControl from "@/components/ui/SegmentedControl";
 
 type Step = "upload" | "confirm" | "done";
 type UploadMethod = "screenshot" | "pdf" | "csv";
@@ -137,78 +141,67 @@ export default function ImportForm() {
   }
 
   return (
-    <main className="min-h-screen bg-neutral-50 px-6 py-10">
+    <main className="min-h-screen bg-paper px-6 py-10">
       <div className="mx-auto max-w-5xl space-y-8">
-        <div>
-          <h1 className="text-2xl font-semibold text-neutral-900">Import releases</h1>
-          <p className="mt-1 text-neutral-600">
-            {step === "done"
+        <PageHeader
+          title="Import releases"
+          description={
+            step === "done"
               ? "Done — see the results below."
-              : "Nothing is saved to your catalog until you confirm it below."}
-          </p>
-        </div>
+              : "Nothing is saved to your catalog until you confirm it below."
+          }
+        />
 
         {step === "upload" && (
-          <form
-            onSubmit={handleExtract}
-            className="max-w-md space-y-4 rounded-lg border border-neutral-200 bg-white p-6"
-          >
-            <div>
-              <span className="block text-sm font-medium text-neutral-700">Source type</span>
-              <div className="mt-1 flex gap-2">
-                {(Object.keys(METHOD_LABEL) as UploadMethod[]).map((m) => (
-                  <button
-                    key={m}
-                    type="button"
-                    onClick={() => selectMethod(m)}
-                    className={`rounded-md border px-3 py-1.5 text-sm font-medium ${
-                      method === m
-                        ? "border-neutral-900 bg-neutral-900 text-white"
-                        : "border-neutral-300 text-neutral-700"
-                    }`}
-                  >
-                    {METHOD_LABEL[m]}
-                  </button>
-                ))}
+          <Card className="max-w-md p-6">
+            <form onSubmit={handleExtract} className="space-y-4">
+              <div>
+                <span className="block text-sm font-medium text-ink/70">Source type</span>
+                <div className="mt-1">
+                  <SegmentedControl
+                    options={(Object.keys(METHOD_LABEL) as UploadMethod[]).map((m) => ({
+                      value: m,
+                      label: METHOD_LABEL[m],
+                    }))}
+                    value={method}
+                    onChange={(v) => selectMethod(v as UploadMethod)}
+                  />
+                </div>
+                <p className="mt-2 text-xs text-ink/50">{METHOD_HELP[method]}</p>
               </div>
-              <p className="mt-2 text-xs text-neutral-500">{METHOD_HELP[method]}</p>
-            </div>
 
-            <div>
-              <label htmlFor="source-file" className="block text-sm font-medium text-neutral-700">
-                File
-              </label>
-              <input
-                ref={fileInputRef}
-                id="source-file"
-                type="file"
-                accept={ACCEPT_BY_METHOD[method]}
-                className="mt-1 block w-full text-sm text-neutral-600 file:mr-4 file:rounded-md file:border-0 file:bg-neutral-900 file:px-4 file:py-2 file:text-sm file:font-medium file:text-white"
-              />
-            </div>
-            {extractError && <p className="text-sm text-red-600">{extractError}</p>}
-            <button
-              type="submit"
-              disabled={extracting}
-              className="rounded-md bg-neutral-900 px-4 py-2 text-sm font-medium text-white disabled:opacity-50"
-            >
-              {extracting ? "Working…" : method === "csv" ? "Parse file" : "Extract album data"}
-            </button>
-          </form>
+              <div>
+                <label htmlFor="source-file" className="block text-sm font-medium text-ink/70">
+                  File
+                </label>
+                <input
+                  ref={fileInputRef}
+                  id="source-file"
+                  type="file"
+                  accept={ACCEPT_BY_METHOD[method]}
+                  className="mt-1 block w-full text-sm text-ink/60 file:mr-4 file:rounded-md file:border-0 file:bg-brass file:px-4 file:py-2 file:text-sm file:font-medium file:text-ink-deep"
+                />
+              </div>
+              {extractError && <p className="text-sm text-rust">{extractError}</p>}
+              <Button type="submit" disabled={extracting}>
+                {extracting ? "Working…" : method === "csv" ? "Parse file" : "Extract album data"}
+              </Button>
+            </form>
+          </Card>
         )}
 
         {step === "confirm" && draft && (
           <div className={method === "screenshot" ? "grid grid-cols-1 gap-8 lg:grid-cols-2" : ""}>
             {method === "screenshot" && sourcePreviewUrl && (
               <div className="space-y-2">
-                <h2 className="text-sm font-medium text-neutral-700">Source screenshot</h2>
+                <h2 className="text-sm font-medium text-ink/70">Source screenshot</h2>
                 {/* Local blob preview — next/image's remote-domain rules don't apply, and
                     don't help here, so a plain <img> is the right tool. */}
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img
                   src={sourcePreviewUrl}
                   alt="Uploaded screenshot"
-                  className="w-full rounded-lg border border-neutral-200 object-contain"
+                  className="w-full rounded-lg border border-ink/10 object-contain"
                 />
               </div>
             )}
@@ -219,14 +212,14 @@ export default function ImportForm() {
                   href={sourcePreviewUrl}
                   target="_blank"
                   rel="noreferrer"
-                  className="mb-4 inline-block text-sm font-medium text-neutral-900 underline"
+                  className="mb-4 inline-block text-sm font-medium text-ink underline"
                 >
                   View source PDF ↗
                 </a>
               )}
 
               {method === "csv" && queueIndex === 0 && csvWarnings.length > 0 && (
-                <div className="mb-4 rounded border border-amber-200 bg-amber-50 p-3 text-sm text-amber-800">
+                <div className="mb-4 rounded border border-rust/30 bg-rust/10 p-3 text-sm text-rust">
                   <p className="font-medium">{csvWarnings.length} row(s) skipped:</p>
                   <ul className="mt-1 list-disc pl-5">
                     {csvWarnings.slice(0, 10).map((w, i) => (
@@ -252,12 +245,12 @@ export default function ImportForm() {
         )}
 
         {step === "done" && (
-          <div className="max-w-md space-y-4 rounded-lg border border-neutral-200 bg-white p-6">
+          <Card className="max-w-md space-y-4 p-6">
             {savedAlbums.length === 0 ? (
-              <p className="text-neutral-900">No releases were saved.</p>
+              <p className="text-ink">No releases were saved.</p>
             ) : (
               <>
-                <p className="text-neutral-900">
+                <p className="text-ink">
                   {savedAlbums.length === 1
                     ? "Album saved to your catalog."
                     : `${savedAlbums.length} albums saved to your catalog.`}
@@ -265,12 +258,12 @@ export default function ImportForm() {
                 <ul className="space-y-1">
                   {savedAlbums.map((album) => (
                     <li key={album.id} className="flex items-center justify-between text-sm">
-                      <span className="text-neutral-900">
+                      <span className="text-ink">
                         {album.title} — {album.artist}
                       </span>
                       <Link
                         href={`/albums/attach?id=${album.id}`}
-                        className="font-medium text-neutral-900 underline"
+                        className="font-medium text-ink underline"
                       >
                         Attach files
                       </Link>
@@ -279,14 +272,10 @@ export default function ImportForm() {
                 </ul>
               </>
             )}
-            <button
-              type="button"
-              onClick={reset}
-              className="rounded-md border border-neutral-300 px-4 py-2 text-sm font-medium text-neutral-700"
-            >
+            <Button type="button" variant="secondary" onClick={reset}>
               Import another
-            </button>
-          </div>
+            </Button>
+          </Card>
         )}
       </div>
     </main>

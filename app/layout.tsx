@@ -54,11 +54,11 @@ export default async function RootLayout({
       className={`${bigShoulders.variable} ${inter.variable} ${plexMono.variable}`}
     >
       <body className="font-sans" style={{ fontFamily: "var(--font-body)" }}>
-        <nav className="sticky top-0 z-50 border-b border-[var(--paper)]/10 bg-[var(--ink-deep)]/90 backdrop-blur-sm px-6 py-3">
+        <nav className="sticky top-0 z-50 border-b border-paper/10 bg-ink-deep/90 backdrop-blur-sm px-6 py-3">
           <div className="mx-auto flex max-w-6xl items-center gap-8">
             <Link
               href="/"
-              className="font-display font-bold text-[var(--paper)] tracking-wide"
+              className="font-display font-bold text-paper tracking-wide"
               style={{ fontFamily: "var(--font-display)" }}
             >
               CMA
@@ -68,7 +68,7 @@ export default async function RootLayout({
                 <Link
                   key={link.href}
                   href={link.href}
-                  className="focus-ring text-sm font-medium text-[var(--paper)]/70 hover:text-[var(--brass-bright)] transition-colors"
+                  className="focus-ring text-sm font-medium text-paper/70 hover:text-brass-bright transition-colors"
                 >
                   {link.label}
                 </Link>
@@ -77,13 +77,13 @@ export default async function RootLayout({
             <div className="ml-auto flex items-center gap-4">
               {user ? (
                 <>
-                  <span className="text-sm text-[var(--paper)]/60">{user.email}</span>
+                  <span className="text-sm text-paper/60">{user.email}</span>
                   <SignOutButton />
                 </>
               ) : (
                 <Link
                   href="/login"
-                  className="focus-ring text-sm font-medium text-[var(--paper)]/70 hover:text-[var(--brass-bright)] transition-colors"
+                  className="focus-ring text-sm font-medium text-paper/70 hover:text-brass-bright transition-colors"
                 >
                   Sign in
                 </Link>

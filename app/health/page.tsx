@@ -8,6 +8,17 @@ import { ScoreBadge, ScoreProgressBar } from "./scoreDisplay";
 import RunHealthCheckButton from "./RunHealthCheckButton";
 import DeleteAlbumButton from "./DeleteAlbumButton";
 import GenerateReportButton from "./GenerateReportButton";
+import PageHeader from "@/components/ui/PageHeader";
+import Card from "@/components/ui/Card";
+import Badge from "@/components/ui/Badge";
+import EmptyState from "@/components/ui/EmptyState";
+
+// Visually matches <Button variant="secondary"> without actually being a
+// <button> — this is a real navigation link (Next.js Link), and Button
+// only renders a <button> element, so wrapping it would either lose proper
+// anchor semantics or nest an interactive element inside another.
+const LINK_BUTTON_SECONDARY =
+  "focus-ring inline-flex items-center justify-center gap-2 rounded-md px-5 py-2.5 text-sm font-semibold transition-colors bg-transparent border border-ink/20 text-ink hover:bg-ink/[0.04] hover:border-ink/35";
 
 // This page reads live catalog/issue state that changes via user actions
 // (import, file attachment, running a health check) — it must not be
@@ -66,40 +77,33 @@ export default async function HealthPage() {
   const albumScoreById = new Map(catalogScore.albums.map((s) => [s.album_id, s]));
 
   return (
-    <main className="min-h-screen bg-neutral-50 px-6 py-10">
+    <main className="min-h-screen bg-paper px-6 py-10">
       <div className="mx-auto max-w-4xl space-y-8">
-        <div className="flex items-start justify-between gap-4">
-          <div>
-            <h1 className="text-2xl font-semibold text-neutral-900">Catalog health</h1>
-            <p className="mt-1 text-neutral-600">
-              Deterministic checks against your confirmed catalog — no AI involved.
-            </p>
-          </div>
-          <div className="flex shrink-0 items-center gap-3">
-            <Link
-              href="/health/preflight"
-              className="rounded-md border border-neutral-300 px-4 py-2 text-sm font-medium text-neutral-900"
-            >
-              Preflight check
-            </Link>
-            {albums.length > 0 && <GenerateReportButton label="Generate report" />}
-            <RunHealthCheckButton />
-          </div>
-        </div>
+        <PageHeader
+          title="Catalog health"
+          description="Deterministic checks against your confirmed catalog — no AI involved."
+          actions={
+            <>
+              <Link href="/health/preflight" className={LINK_BUTTON_SECONDARY}>
+                Preflight check
+              </Link>
+              {albums.length > 0 && <GenerateReportButton label="Generate report" />}
+              <RunHealthCheckButton />
+            </>
+          }
+        />
 
         {albums.length > 0 && (
-          <div className="space-y-3 rounded-lg border border-neutral-200 bg-white p-6">
+          <Card className="space-y-3 p-6">
             <div className="flex flex-wrap items-baseline justify-between gap-3">
               <div className="flex items-baseline gap-3">
-                <span className="text-4xl font-semibold text-neutral-900">
-                  {catalogScore.average}%
-                </span>
+                <span className="text-4xl font-semibold text-ink">{catalogScore.average}%</span>
                 <ScoreBadge band={catalogScore.band} />
               </div>
               {catalogScore.weakest && (
-                <p className="text-sm text-neutral-500">
+                <p className="text-sm text-ink/50">
                   Weakest album:{" "}
-                  <span className="font-medium text-neutral-700">
+                  <span className="font-medium text-ink/70">
                     {albums.find((a) => a.id === catalogScore.weakest!.album_id)?.title ?? "—"}
                   </span>{" "}
                   — {catalogScore.weakest.score}%
@@ -107,39 +111,46 @@ export default async function HealthPage() {
               )}
             </div>
             <ScoreProgressBar score={catalogScore.average} band={catalogScore.band} />
-            <p className="text-xs text-neutral-500">{SCORE_FRAMING_NOTE}</p>
-          </div>
+            <p className="text-xs text-ink/50">{SCORE_FRAMING_NOTE}</p>
+          </Card>
         )}
 
-        <div className="space-y-2 rounded-lg border border-neutral-200 bg-white p-6">
-          <p className="text-sm text-neutral-700">
+        <Card className="space-y-2 p-6">
+          <p className="text-sm text-ink/70">
             {albums.length} album{albums.length === 1 ? "" : "s"} · {tracks.length} track
             {tracks.length === 1 ? "" : "s"}
           </p>
           {albums.length === 0 ? (
-            <p className="text-neutral-500">Run a check once you've confirmed an import.</p>
+            <p className="text-ink/50">Run a check once you've confirmed an import.</p>
           ) : ready ? (
-            <p className="font-medium text-emerald-700">
-              ✓ Catalog ready for migration
-              {warningCount > 0 &&
-                ` (${warningCount} minor warning${warningCount === 1 ? "" : "s"} to review)`}
-            </p>
+            <div className="flex items-center gap-2">
+              <Badge tone="success">Ready</Badge>
+              <span className="text-sm text-ink/70">
+                Catalog ready for migration
+                {warningCount > 0 &&
+                  ` (${warningCount} minor warning${warningCount === 1 ? "" : "s"} to review)`}
+              </span>
+            </div>
           ) : (
-            <p className="font-medium text-red-700">
-              ✗ {errorCount} issue{errorCount === 1 ? "" : "s"} should be fixed before migration
-              {warningCount > 0 && ` · ${warningCount} warning${warningCount === 1 ? "" : "s"}`}
-            </p>
+            <div className="flex items-center gap-2">
+              <Badge tone="danger">Not ready</Badge>
+              <span className="text-sm text-ink/70">
+                {errorCount} issue{errorCount === 1 ? "" : "s"} should be fixed before migration
+                {warningCount > 0 && ` · ${warningCount} warning${warningCount === 1 ? "" : "s"}`}
+              </span>
+            </div>
           )}
-        </div>
+        </Card>
 
         {albums.length === 0 ? (
-          <p className="text-neutral-600">
-            No confirmed albums yet.{" "}
-            <Link href="/import" className="underline">
-              Import one
-            </Link>{" "}
-            to get started.
-          </p>
+          <EmptyState
+            message="No confirmed albums yet."
+            action={
+              <Link href="/import" className={LINK_BUTTON_SECONDARY}>
+                Import one
+              </Link>
+            }
+          />
         ) : (
           <ul className="space-y-4">
             {albums.map((album) => {
@@ -148,66 +159,72 @@ export default async function HealthPage() {
               const trackCount = trackCountByAlbum.get(album.id) ?? 0;
               const albumScore = albumScoreById.get(album.id);
               return (
-                <li key={album.id} className="rounded-lg border border-neutral-200 bg-white p-6">
-                  <div className="flex items-start justify-between gap-4">
-                    <div>
-                      <p className="font-medium text-neutral-900">
-                        {album.title}{" "}
-                        <span className="font-normal text-neutral-500">— {album.artist}</span>
-                      </p>
-                      <p className="text-sm text-neutral-500">
-                        {trackCount} track{trackCount === 1 ? "" : "s"}
-                      </p>
-                      {albumScore && (
-                        <div className="mt-2 flex items-center gap-2">
-                          <span className="text-sm font-medium text-neutral-700">
-                            {albumScore.score}%
+                <li key={album.id}>
+                  <Card className="p-6">
+                    <div className="flex items-start justify-between gap-4">
+                      <div>
+                        <p className="font-medium text-ink">
+                          {album.title} <span className="font-normal text-ink/50">— {album.artist}</span>
+                        </p>
+                        <p className="text-sm text-ink/50">
+                          {trackCount} track{trackCount === 1 ? "" : "s"}
+                        </p>
+                        {albumScore && (
+                          <div className="mt-2 flex items-center gap-2">
+                            <span className="text-sm font-medium text-ink/70">{albumScore.score}%</span>
+                            <ScoreBadge band={albumScore.band} />
+                          </div>
+                        )}
+                      </div>
+                      <div className="flex shrink-0 items-center gap-3 text-sm">
+                        {albumIssues.length === 0 ? (
+                          <span className="text-brass">✓ No issues</span>
+                        ) : (
+                          <span className={albumErrorCount > 0 ? "text-rust" : "text-rust/70"}>
+                            {albumIssues.length} issue{albumIssues.length === 1 ? "" : "s"}
                           </span>
-                          <ScoreBadge band={albumScore.band} />
-                        </div>
-                      )}
+                        )}
+                        <Link
+                          href={`/health/preflight?album_id=${album.id}`}
+                          className="text-ink underline hover:text-brass"
+                        >
+                          Preflight
+                        </Link>
+                        <GenerateReportButton albumId={album.id} label="Report" />
+                        <Link
+                          href={`/albums/edit?id=${album.id}`}
+                          className="text-ink underline hover:text-brass"
+                        >
+                          Edit
+                        </Link>
+                        <Link
+                          href={`/albums/attach?id=${album.id}`}
+                          className="text-ink underline hover:text-brass"
+                        >
+                          Attach files
+                        </Link>
+                        <Link
+                          href={`/albums/export?id=${album.id}`}
+                          className="text-ink underline hover:text-brass"
+                        >
+                          Export pack
+                        </Link>
+                        <DeleteAlbumButton albumId={album.id} title={album.title} />
+                      </div>
                     </div>
-                    <div className="flex shrink-0 items-center gap-3 text-sm">
-                      {albumIssues.length === 0 ? (
-                        <span className="text-emerald-700">✓ No issues</span>
-                      ) : (
-                        <span className={albumErrorCount > 0 ? "text-red-700" : "text-amber-700"}>
-                          {albumIssues.length} issue{albumIssues.length === 1 ? "" : "s"}
-                        </span>
-                      )}
-                      <Link
-                        href={`/health/preflight?album_id=${album.id}`}
-                        className="text-neutral-900 underline"
-                      >
-                        Preflight
-                      </Link>
-                      <GenerateReportButton albumId={album.id} label="Report" />
-                      <Link href={`/albums/edit?id=${album.id}`} className="text-neutral-900 underline">
-                        Edit
-                      </Link>
-                      <Link href={`/albums/attach?id=${album.id}`} className="text-neutral-900 underline">
-                        Attach files
-                      </Link>
-                      <Link href={`/albums/export?id=${album.id}`} className="text-neutral-900 underline">
-                        Export pack
-                      </Link>
-                      <DeleteAlbumButton albumId={album.id} title={album.title} />
-                    </div>
-                  </div>
-                  {albumIssues.length > 0 && (
-                    <ul className="mt-4 space-y-1 border-t border-neutral-100 pt-4">
-                      {albumIssues.map((issue) => (
-                        <li key={issue.id} className="flex items-start gap-2 text-sm">
-                          <span
-                            className={issue.severity === "error" ? "text-red-600" : "text-amber-600"}
-                          >
-                            {issue.severity === "error" ? "✗" : "⚠"}
-                          </span>
-                          <span className="text-neutral-700">{issue.message}</span>
-                        </li>
-                      ))}
-                    </ul>
-                  )}
+                    {albumIssues.length > 0 && (
+                      <ul className="mt-4 space-y-1 border-t border-ink/10 pt-4">
+                        {albumIssues.map((issue) => (
+                          <li key={issue.id} className="flex items-start gap-2 text-sm">
+                            <span className={issue.severity === "error" ? "text-rust" : "text-rust/70"}>
+                              {issue.severity === "error" ? "✗" : "⚠"}
+                            </span>
+                            <span className="text-ink/70">{issue.message}</span>
+                          </li>
+                        ))}
+                      </ul>
+                    )}
+                  </Card>
                 </li>
               );
             })}

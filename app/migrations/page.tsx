@@ -4,6 +4,12 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { getCurrentUserId } from "@/lib/auth/currentUser";
 import type { Album, MigrationRecord, DistributorProfile } from "@/types/catalog";
 import MigrationRow from "./MigrationRow";
+import PageHeader from "@/components/ui/PageHeader";
+import Card from "@/components/ui/Card";
+import EmptyState from "@/components/ui/EmptyState";
+
+const LINK_BUTTON_SECONDARY =
+  "focus-ring inline-flex items-center justify-center gap-2 rounded-md px-5 py-2.5 text-sm font-semibold transition-colors bg-transparent border border-ink/20 text-ink hover:bg-ink/[0.04] hover:border-ink/35";
 
 // Reads live catalog/migration state — must not be prerendered as static
 // build-time HTML.
@@ -43,39 +49,37 @@ export default async function MigrationsPage() {
   }
 
   return (
-    <main className="min-h-screen bg-neutral-50 px-6 py-10">
+    <main className="min-h-screen bg-paper px-6 py-10">
       <div className="mx-auto max-w-4xl space-y-8">
-        <div>
-          <h1 className="text-2xl font-semibold text-neutral-900">Migration tracker</h1>
-          <p className="mt-1 text-neutral-600">
-            Every status here is you reporting something you actually did on the distributor&apos;s
-            own site — nothing is auto-detected or automated.
-          </p>
-        </div>
+        <PageHeader
+          title="Migration tracker"
+          description="Every status here is you reporting something you actually did on the distributor's own site — nothing is auto-detected or automated."
+        />
 
         {profiles.length === 0 && (
-          <p className="text-amber-700">
-            No distributor profiles configured yet — nothing to migrate to.
-          </p>
+          <p className="text-rust">No distributor profiles configured yet — nothing to migrate to.</p>
         )}
 
         {albums.length === 0 ? (
-          <p className="text-neutral-600">
-            No confirmed albums yet.{" "}
-            <Link href="/import" className="underline">
-              Import one
-            </Link>{" "}
-            to get started.
-          </p>
+          <EmptyState
+            message="No confirmed albums yet."
+            action={
+              <Link href="/import" className={LINK_BUTTON_SECONDARY}>
+                Import one
+              </Link>
+            }
+          />
         ) : (
           <ul className="space-y-4">
             {albums.map((album) => (
-              <li key={album.id} className="rounded-lg border border-neutral-200 bg-white p-6">
-                <MigrationRow
-                  album={album}
-                  records={recordsByAlbum.get(album.id) ?? []}
-                  profiles={profiles}
-                />
+              <li key={album.id}>
+                <Card className="p-6">
+                  <MigrationRow
+                    album={album}
+                    records={recordsByAlbum.get(album.id) ?? []}
+                    profiles={profiles}
+                  />
+                </Card>
               </li>
             ))}
           </ul>

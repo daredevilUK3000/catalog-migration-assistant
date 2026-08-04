@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import Button from "@/components/ui/Button";
 
 export default function RunHealthCheckButton() {
   const router = useRouter();
@@ -28,15 +29,10 @@ export default function RunHealthCheckButton() {
 
   return (
     <div className="text-right">
-      <button
-        type="button"
-        onClick={handleRun}
-        disabled={running}
-        className="rounded-md bg-neutral-900 px-4 py-2 text-sm font-medium text-white disabled:opacity-50"
-      >
+      <Button type="button" onClick={handleRun} disabled={running}>
         {running ? "Checking…" : "Run health check"}
-      </button>
-      {error && <p className="mt-2 max-w-xs text-sm text-red-600">{error}</p>}
+      </Button>
+      {error && <p className="mt-2 max-w-xs text-sm text-rust">{error}</p>}
     </div>
   );
 }

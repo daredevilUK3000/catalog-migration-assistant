@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Button from "@/components/ui/Button";
 
 export default function GenerateReportButton({
   albumId,
@@ -43,19 +44,25 @@ export default function GenerateReportButton({
 
   return (
     <span>
-      <button
-        type="button"
-        onClick={handleGenerate}
-        disabled={generating}
-        className={
-          albumId
-            ? "text-neutral-900 underline disabled:opacity-50"
-            : "rounded-md border border-neutral-300 px-4 py-2 text-sm font-medium text-neutral-900 disabled:opacity-50"
-        }
-      >
-        {generating ? "Generating…" : label}
-      </button>
-      {error && <p className="mt-1 text-sm text-red-600">{error}</p>}
+      {albumId ? (
+        // Inline variant sits in a row of plain text links (Preflight, Edit,
+        // Attach files, Export pack) — kept as a plain button rather than
+        // <Button> so it matches those siblings instead of turning into a
+        // pill that doesn't belong in that row.
+        <button
+          type="button"
+          onClick={handleGenerate}
+          disabled={generating}
+          className="text-ink underline hover:text-brass disabled:opacity-50"
+        >
+          {generating ? "Generating…" : label}
+        </button>
+      ) : (
+        <Button type="button" variant="secondary" onClick={handleGenerate} disabled={generating}>
+          {generating ? "Generating…" : label}
+        </Button>
+      )}
+      {error && <p className="mt-1 text-sm text-rust">{error}</p>}
     </span>
   );
 }
