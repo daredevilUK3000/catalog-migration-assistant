@@ -24,7 +24,20 @@ export default function AuthForm({ mode }: { mode: Mode }) {
     const { data, error: authError } =
       mode === "login"
         ? await supabase.auth.signInWithPassword({ email, password })
-        : await supabase.auth.signUp({ email, password });
+        : await supabase.auth.signUp({
+            email,
+            password,
+            // Must point at /auth/callback, not a plain page — the PKCE flow
+            // (the @supabase/ssr default) hands back a one-time `code` that
+            // only that route handler exchanges for a session; landing
+            // anywhere else leaves the code unused and the visitor logged
+            // out. Falls back to the project's dashboard "Site URL" if
+            // omitted, or if this origin isn't in Auth > URL Configuration >
+            // Redirect URLs — worth having explicit either way so a
+            // misconfigured Site URL doesn't silently send confirmations to
+            // the wrong deployment.
+            options: { emailRedirectTo: `${window.location.origin}/auth/callback` },
+          });
 
     if (authError) {
       setStatus("error");
