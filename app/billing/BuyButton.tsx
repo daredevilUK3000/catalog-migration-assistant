@@ -3,7 +3,13 @@
 import { useState } from "react";
 import Button from "@/components/ui/Button";
 
-export default function BuyButton({ priceLabel }: { priceLabel: string }) {
+export default function BuyButton({
+  priceLabel,
+  className = "",
+}: {
+  priceLabel: string;
+  className?: string;
+}) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -26,8 +32,8 @@ export default function BuyButton({ priceLabel }: { priceLabel: string }) {
   }
 
   return (
-    <div>
-      <Button type="button" onClick={handleBuy} disabled={loading}>
+    <div className="flex flex-col items-center">
+      <Button type="button" onClick={handleBuy} disabled={loading} className={className}>
         {loading ? "Redirecting…" : `Buy Own Your Music — ${priceLabel}`}
       </Button>
       {error && <p className="mt-2 text-sm text-rust">{error}</p>}
