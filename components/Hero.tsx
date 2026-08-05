@@ -52,7 +52,7 @@ export default function Hero() {
   const fact = FACTS[factIndex];
 
   return (
-    <section className="relative h-[70dvh] min-h-[420px] max-h-[640px] sm:max-h-[720px] lg:h-[92dvh] lg:max-h-none w-full overflow-hidden bg-ink-deep">
+    <section className="relative min-h-[600px] sm:h-[70dvh] sm:min-h-[420px] sm:max-h-[720px] lg:h-[92dvh] lg:max-h-none w-full overflow-hidden bg-ink-deep">
       {/* Cross-fading video layers */}
       {CLIPS.map((src, i) => (
         <video
