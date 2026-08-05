@@ -53,7 +53,12 @@ export default async function ExportPage({
     <main className="min-h-screen bg-neutral-50 px-6 py-10">
       <div className="mx-auto max-w-3xl space-y-8">
         <div>
-          <h1 className="text-2xl font-semibold text-neutral-900">Export pack</h1>
+          <div className="flex items-center gap-2">
+            <h1 className="text-2xl font-semibold text-neutral-900">Export pack</h1>
+            <span className="rounded bg-amber-100 px-2 py-0.5 text-xs font-semibold uppercase tracking-wide text-amber-800">
+              Premium feature
+            </span>
+          </div>
           <p className="mt-1 text-neutral-600">
             {album.title} — {album.artist}
           </p>

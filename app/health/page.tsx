@@ -122,6 +122,13 @@ export default async function HealthPage() {
           </Card>
         )}
 
+        {isPremium && allAlbums.length > 1 && (
+          <p className="flex items-center gap-2 text-xs text-ink/50">
+            <PremiumTag unlocked />
+            Full catalog health across all {allAlbums.length} albums — included in your purchase.
+          </p>
+        )}
+
         {albums.length > 0 && (
           <Card className="space-y-3 p-6">
             <div className="flex flex-wrap items-baseline justify-between gap-3">
