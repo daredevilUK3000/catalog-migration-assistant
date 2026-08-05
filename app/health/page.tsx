@@ -13,6 +13,7 @@ import DownloadBackupButton from "./DownloadBackupButton";
 import PageHeader from "@/components/ui/PageHeader";
 import Card from "@/components/ui/Card";
 import Badge from "@/components/ui/Badge";
+import PremiumTag from "@/components/ui/PremiumTag";
 import EmptyState from "@/components/ui/EmptyState";
 
 // Visually matches <Button variant="secondary"> without actually being a
@@ -97,7 +98,12 @@ export default async function HealthPage() {
               <Link href="/health/preflight" className={LINK_BUTTON_SECONDARY}>
                 Preflight check
               </Link>
-              {albums.length > 0 && <GenerateReportButton label="Generate report" />}
+              {albums.length > 0 && (
+                <span className="inline-flex items-center">
+                  <GenerateReportButton label="Generate report" />
+                  <PremiumTag unlocked={isPremium} />
+                </span>
+              )}
               {albums.length > 0 && <DownloadBackupButton />}
               <RunHealthCheckButton />
             </>
@@ -213,7 +219,10 @@ export default async function HealthPage() {
                         >
                           Preflight
                         </Link>
-                        <GenerateReportButton albumId={album.id} label="Report" />
+                        <span className="inline-flex items-center">
+                          <GenerateReportButton albumId={album.id} label="Report" />
+                          <PremiumTag unlocked={isPremium} />
+                        </span>
                         <Link
                           href={`/albums/edit?id=${album.id}`}
                           className="text-ink underline hover:text-brass"
@@ -226,12 +235,15 @@ export default async function HealthPage() {
                         >
                           Attach files
                         </Link>
-                        <Link
-                          href={`/albums/export?id=${album.id}`}
-                          className="text-ink underline hover:text-brass"
-                        >
-                          Export pack
-                        </Link>
+                        <span className="inline-flex items-center">
+                          <Link
+                            href={`/albums/export?id=${album.id}`}
+                            className="text-ink underline hover:text-brass"
+                          >
+                            Export pack
+                          </Link>
+                          <PremiumTag unlocked={isPremium} />
+                        </span>
                         <DeleteAlbumButton albumId={album.id} title={album.title} />
                       </div>
                     </div>

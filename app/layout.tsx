@@ -2,6 +2,8 @@ import type { Metadata } from "next";
 import { Big_Shoulders, Inter, IBM_Plex_Mono } from "next/font/google";
 import NavBar from "@/components/NavBar";
 import { createClient } from "@/lib/supabase/server";
+import { getCurrentUserId } from "@/lib/auth/currentUser";
+import { isPremiumUserId } from "@/lib/auth/premium";
 import "./globals.css";
 
 const bigShoulders = Big_Shoulders({
@@ -39,13 +41,19 @@ export default async function RootLayout({
     data: { user },
   } = await supabase.auth.getUser();
 
+  // Uses getCurrentUserId() (includes the DEV_USER_ID fallback), not just
+  // the real session above — the nav's premium chip should reflect actual
+  // feature access, same identity the gates in lib/auth/premium.ts check.
+  const currentUserId = await getCurrentUserId();
+  const isPremium = currentUserId ? await isPremiumUserId(currentUserId) : false;
+
   return (
     <html
       lang="en"
       className={`${bigShoulders.variable} ${inter.variable} ${plexMono.variable}`}
     >
       <body className="font-sans" style={{ fontFamily: "var(--font-body)" }}>
-        <NavBar userEmail={user?.email ?? null} />
+        <NavBar userEmail={user?.email ?? null} isPremium={isPremium} />
         {children}
       </body>
     </html>

@@ -12,8 +12,29 @@ const NAV_LINKS = [
   { href: "/billing", label: "Billing" },
 ] as const;
 
-export default function NavBar({ userEmail }: { userEmail: string | null }) {
+export default function NavBar({
+  userEmail,
+  isPremium = false,
+}: {
+  userEmail: string | null;
+  isPremium?: boolean;
+}) {
   const [open, setOpen] = useState(false);
+
+  // Only ever shown alongside userEmail below (i.e. already known signed in)
+  // — no separate "signed in" check needed here.
+  const premiumChip = isPremium ? (
+    <span className="rounded-full bg-brass/20 px-2.5 py-1 text-xs font-semibold text-brass-bright">
+      ✓ Premium
+    </span>
+  ) : (
+    <Link
+      href="/billing"
+      className="focus-ring rounded-full bg-brass px-2.5 py-1 text-xs font-semibold text-ink-deep transition-colors hover:bg-brass-bright"
+    >
+      Upgrade
+    </Link>
+  );
 
   return (
     <nav className="sticky top-0 z-50 border-b border-paper/10 bg-ink-deep/90 backdrop-blur-sm px-4 sm:px-6 py-4 sm:py-6">
@@ -43,6 +64,7 @@ export default function NavBar({ userEmail }: { userEmail: string | null }) {
         <div className="ml-auto hidden items-center gap-4 md:flex">
           {userEmail ? (
             <>
+              {premiumChip}
               <span className="text-sm text-paper/60">{userEmail}</span>
               <SignOutButton />
             </>
@@ -94,6 +116,7 @@ export default function NavBar({ userEmail }: { userEmail: string | null }) {
           <div className="flex items-center gap-4 border-t border-paper/10 pt-4">
             {userEmail ? (
               <>
+                {premiumChip}
                 <span className="truncate text-sm text-paper/60">{userEmail}</span>
                 <SignOutButton />
               </>
