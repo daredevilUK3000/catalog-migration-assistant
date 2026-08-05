@@ -41,7 +41,10 @@ export default function BillingHero({
 
   return (
     <section className="relative min-h-[560px] w-full overflow-hidden bg-ink-deep sm:h-[70dvh] sm:min-h-[460px] sm:max-h-[720px]">
-      {/* Cross-fading video layers — same pattern as the homepage Hero */}
+      {/* Cross-fading video layers — same pattern as the homepage Hero.
+          Source clips run dim (studio/stage lighting), so a brightness +
+          contrast boost is applied on top of transcoding, not just relying
+          on the overlay being lighter. */}
       {CLIPS.map((src, i) => (
         <video
           key={src}
@@ -50,17 +53,16 @@ export default function BillingHero({
           muted
           loop
           playsInline
-          className={`absolute inset-0 h-full w-full object-cover transition-opacity duration-[1500ms] ease-in-out ${
+          className={`absolute inset-0 h-full w-full object-cover brightness-125 contrast-105 saturate-110 transition-opacity duration-[1500ms] ease-in-out ${
             i === active ? "opacity-100" : "opacity-0"
           }`}
         />
       ))}
 
-      {/* Overlay gradient for legibility — a touch heavier than the homepage
-          hero since this page needs the price/CTA to read clearly, not just
-          a headline. */}
-      <div className="absolute inset-0 bg-gradient-to-t from-ink-deep via-ink-deep/75 to-ink-deep/55" />
-      <div className="absolute inset-0 bg-ink-deep/35" />
+      {/* Overlay gradient for legibility — lighter than a first pass at
+          this, matched closer to the homepage Hero's own gradient so the
+          footage actually reads instead of disappearing into black. */}
+      <div className="absolute inset-0 bg-gradient-to-t from-ink-deep/90 via-ink-deep/45 to-ink-deep/20" />
 
       <div className="relative z-10 flex h-full flex-col items-center justify-center px-6 py-20 text-center">
         {canceled && !isPremium && (
