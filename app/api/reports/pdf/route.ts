@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { renderToBuffer } from "@react-pdf/renderer";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { getCurrentUserId } from "@/lib/auth/currentUser";
+import { requirePremiumUserId } from "@/lib/auth/premium";
 import type { Album, CatalogIssue, Track } from "@/types/catalog";
 import { MigrationReportDocument } from "@/lib/migrationReportPdf";
 
@@ -12,10 +12,11 @@ function slugify(text: string): string {
 }
 
 export async function GET(request: NextRequest) {
-  const userId = await getCurrentUserId();
-  if (!userId) {
-    return NextResponse.json({ error: "Not signed in." }, { status: 401 });
+  const gate = await requirePremiumUserId();
+  if (!gate.ok) {
+    return NextResponse.json({ error: gate.error }, { status: gate.status });
   }
+  const userId = gate.userId;
 
   const albumId = request.nextUrl.searchParams.get("album_id");
   const supabase = createAdminClient();

@@ -9,6 +9,7 @@ const NAV_LINKS = [
   { href: "/import", label: "Import" },
   { href: "/health", label: "Catalog health" },
   { href: "/migrations", label: "Migration tracker" },
+  { href: "/billing", label: "Billing" },
 ] as const;
 
 export default function NavBar({ userEmail }: { userEmail: string | null }) {

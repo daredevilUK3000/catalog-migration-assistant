@@ -370,6 +370,34 @@ create policy "Authenticated users can read distributor profiles"
   using (auth.role() = 'authenticated');
 
 -- ============================================================
+-- PROFILES
+-- One row per user, created only on first purchase (upserted by the Stripe
+-- webhook, see app/api/webhooks/stripe/route.ts) — not on signup. The
+-- premium gate (lib/auth/premium.ts) treats "no row" the same as
+-- is_premium = false, so no signup trigger is needed.
+-- ============================================================
+create table if not exists profiles (
+  id uuid primary key references auth.users(id) on delete cascade,
+
+  is_premium boolean not null default false,
+  purchased_at timestamptz,
+  stripe_customer_id text,
+
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
+
+create index if not exists idx_profiles_stripe_customer_id on profiles(stripe_customer_id);
+
+-- Writes only ever come from the Stripe webhook via the admin client
+-- (bypasses RLS) — same convention as every other write path in this app —
+-- so only a self-read policy is needed here.
+alter table profiles enable row level security;
+create policy "Users can view their own profile"
+  on profiles for select
+  using (auth.uid() = id);
+
+-- ============================================================
 -- STORAGE BUCKETS
 -- Album artwork only. Track audio briefly moved through Cloudflare R2
 -- (lib/r2/storage.ts, R2_ACCOUNT_ID etc. in .env) after this project's

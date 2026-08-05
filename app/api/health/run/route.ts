@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { getCurrentUserId } from "@/lib/auth/currentUser";
+import { isPremiumUserId } from "@/lib/auth/premium";
 import { runCatalogHealthCheck, findingKey } from "@/lib/catalogHealth";
 import type { Album, Track } from "@/types/catalog";
 
@@ -13,11 +14,13 @@ export async function POST() {
   }
 
   const supabase = createAdminClient();
+  const isPremium = await isPremiumUserId(userId);
 
   const { data: albumRows, error: albumsError } = await supabase
     .from("albums")
     .select("*")
-    .eq("user_id", userId);
+    .eq("user_id", userId)
+    .order("created_at", { ascending: false });
 
   if (albumsError) {
     return NextResponse.json(
@@ -25,7 +28,11 @@ export async function POST() {
       { status: 502 }
     );
   }
-  const albums = (albumRows ?? []) as Album[];
+  // Full-catalog health checking is a premium action — a non-premium user
+  // only gets their most recently added album checked, gated server-side
+  // (matches the read-side gate in /health and /health/preflight).
+  const allAlbums = (albumRows ?? []) as Album[];
+  const albums = isPremium ? allAlbums : allAlbums.slice(0, 1);
 
   if (albums.length === 0) {
     return NextResponse.json({ issues_found: 0, issues_resolved: 0 });

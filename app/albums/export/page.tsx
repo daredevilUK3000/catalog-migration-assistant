@@ -1,6 +1,6 @@
 import { notFound, redirect } from "next/navigation";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { getCurrentUserId } from "@/lib/auth/currentUser";
+import { requirePremiumUserId } from "@/lib/auth/premium";
 import { buildExportPack, buildPasteQueue, type ExportRow } from "@/lib/exportPack";
 import type { Album, Track, DistributorProfile } from "@/types/catalog";
 import CopyQueueJsonButton from "./CopyQueueJsonButton";
@@ -18,10 +18,13 @@ export default async function ExportPage({
     notFound();
   }
 
-  const userId = await getCurrentUserId();
-  if (!userId) {
-    redirect("/login");
+  // Export Pack generation is a premium action — gated server-side, not
+  // just by hiding the button.
+  const gate = await requirePremiumUserId();
+  if (!gate.ok) {
+    redirect(gate.status === 401 ? "/login" : "/billing");
   }
+  const userId = gate.userId;
 
   const supabase = createAdminClient();
 

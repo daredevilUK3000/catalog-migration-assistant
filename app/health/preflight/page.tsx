@@ -2,6 +2,7 @@ import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { getCurrentUserId } from "@/lib/auth/currentUser";
+import { isPremiumUserId } from "@/lib/auth/premium";
 import type { Album, CatalogIssue, Track } from "@/types/catalog";
 import { computeAlbumScore, computeCatalogScore, buildPreflightSteps } from "@/lib/migrationScore";
 import PreflightAnimation from "./PreflightAnimation";
@@ -22,8 +23,10 @@ export default async function PreflightPage({
   }
 
   const supabase = createAdminClient();
+  const isPremium = await isPremiumUserId(userId);
 
   let albums: Album[];
+  let catalogLocked = false;
   if (album_id) {
     const { data: albumRow } = await supabase
       .from("albums")
@@ -39,7 +42,12 @@ export default async function PreflightPage({
       .select("*")
       .eq("user_id", userId)
       .order("created_at", { ascending: false });
-    albums = (albumRows ?? []) as Album[];
+    const allAlbums = (albumRows ?? []) as Album[];
+    // Whole-catalog preflight is a premium action, same as the /health
+    // catalog score — a non-premium user only gets their most recently
+    // added album, gated server-side.
+    albums = isPremium ? allAlbums : allAlbums.slice(0, 1);
+    catalogLocked = !isPremium && allAlbums.length > albums.length;
   }
 
   const albumIds = albums.map((a) => a.id);
@@ -88,6 +96,20 @@ export default async function PreflightPage({
           <h1 className="mt-2 text-2xl font-semibold text-neutral-900">Migration preflight</h1>
           <p className="mt-1 text-neutral-600">{scopeLabel}</p>
         </div>
+
+        {catalogLocked && (
+          <div className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-amber-300 bg-amber-50 p-4">
+            <p className="text-sm text-neutral-700">
+              This preflight covers 1 album. Unlock the full catalog with Own Your Music.
+            </p>
+            <Link
+              href="/billing"
+              className="rounded-md bg-neutral-900 px-4 py-2 text-sm font-medium text-white"
+            >
+              Unlock on /billing
+            </Link>
+          </div>
+        )}
 
         <PreflightAnimation
           steps={steps}

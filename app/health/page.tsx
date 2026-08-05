@@ -2,6 +2,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { getCurrentUserId } from "@/lib/auth/currentUser";
+import { isPremiumUserId } from "@/lib/auth/premium";
 import type { Album, CatalogIssue } from "@/types/catalog";
 import { computeCatalogScore, SCORE_FRAMING_NOTE } from "@/lib/migrationScore";
 import { ScoreBadge, ScoreProgressBar } from "./scoreDisplay";
@@ -39,7 +40,15 @@ export default async function HealthPage() {
     .select("*")
     .eq("user_id", userId)
     .order("created_at", { ascending: false });
-  const albums = (albumRows ?? []) as Album[];
+  const allAlbums = (albumRows ?? []) as Album[];
+
+  // Full multi-album catalog health/score is a premium action — a
+  // non-premium user only sees their most recently added album, gated
+  // server-side (not just hidden), same discipline as Export Pack and the
+  // Migration Report PDF.
+  const isPremium = await isPremiumUserId(userId);
+  const albums = isPremium ? allAlbums : allAlbums.slice(0, 1);
+  const catalogLocked = !isPremium && allAlbums.length > albums.length;
   const albumIds = albums.map((a) => a.id);
 
   // Sequential queries, not embedded joins — project convention.
@@ -94,6 +103,18 @@ export default async function HealthPage() {
             </>
           }
         />
+
+        {catalogLocked && (
+          <Card className="flex flex-wrap items-center justify-between gap-3 border-brass/30 bg-brass/[0.06] p-4">
+            <p className="text-sm text-ink/70">
+              Showing health for 1 of {allAlbums.length} albums. Unlock full catalog health and
+              scoring across every album with Own Your Music.
+            </p>
+            <Link href="/billing" className={LINK_BUTTON_SECONDARY}>
+              Unlock on /billing
+            </Link>
+          </Card>
+        )}
 
         {albums.length > 0 && (
           <Card className="space-y-3 p-6">

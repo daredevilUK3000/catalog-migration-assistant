@@ -1,16 +1,17 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { getCurrentUserId } from "@/lib/auth/currentUser";
+import { requirePremiumUserId } from "@/lib/auth/premium";
 import { buildExportCsv } from "@/lib/exportPack";
 import type { Album, Track, DistributorProfile } from "@/types/catalog";
 
 export const runtime = "nodejs";
 
 export async function GET(request: NextRequest) {
-  const userId = await getCurrentUserId();
-  if (!userId) {
-    return NextResponse.json({ error: "Not signed in." }, { status: 401 });
+  const gate = await requirePremiumUserId();
+  if (!gate.ok) {
+    return NextResponse.json({ error: gate.error }, { status: gate.status });
   }
+  const userId = gate.userId;
 
   const albumId = request.nextUrl.searchParams.get("id");
   const slug = request.nextUrl.searchParams.get("distributor");
