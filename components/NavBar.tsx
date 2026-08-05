@@ -42,10 +42,10 @@ export default function NavBar({
         <Link
           href="/"
           onClick={() => setOpen(false)}
-          className="flex min-w-0 items-center gap-2 sm:gap-4 font-display font-bold text-paper tracking-wide text-xl sm:text-3xl lg:text-6xl"
+          className="flex min-w-0 shrink-0 items-center gap-2 sm:gap-3 font-display font-bold text-paper tracking-wide text-xl sm:text-2xl lg:text-3xl"
           style={{ fontFamily: "var(--font-display)" }}
         >
-          <LogoMark className="h-9 w-9 shrink-0 sm:h-14 sm:w-14 lg:h-32 lg:w-32" />
+          <LogoMark className="h-9 w-9 shrink-0 sm:h-11 sm:w-11 lg:h-12 lg:w-12" />
           <span className="truncate">OwnYourMusic</span>
         </Link>
 
