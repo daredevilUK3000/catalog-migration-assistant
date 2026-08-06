@@ -8,38 +8,20 @@ import PageHeader from "@/components/ui/PageHeader";
 import Card from "@/components/ui/Card";
 import Button from "@/components/ui/Button";
 import SegmentedControl from "@/components/ui/SegmentedControl";
+import {
+  type UploadMethod,
+  METHOD_LABEL,
+  ACCEPT_BY_METHOD,
+  ENDPOINT_BY_METHOD,
+  FIELD_NAME_BY_METHOD,
+} from "@/lib/importSource";
 
 type Step = "upload" | "confirm" | "done";
-type UploadMethod = "screenshot" | "pdf" | "csv";
-
-const METHOD_LABEL: Record<UploadMethod, string> = {
-  screenshot: "Screenshot",
-  pdf: "PDF",
-  csv: "CSV / Excel",
-};
 
 const METHOD_HELP: Record<UploadMethod, string> = {
   screenshot: "A screenshot of one release from your distributor's dashboard.",
   pdf: "A release sheet or export PDF for one release.",
   csv: "A spreadsheet listing one or more releases — needs Album, Artist, and Track Title columns (a few common header spellings are recognized). No AI involved; parsing is plain and deterministic.",
-};
-
-const ACCEPT_BY_METHOD: Record<UploadMethod, string> = {
-  screenshot: "image/jpeg,image/png,image/gif,image/webp",
-  pdf: "application/pdf",
-  csv: ".csv,.xlsx,text/csv,application/vnd.ms-excel,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-};
-
-const ENDPOINT_BY_METHOD: Record<UploadMethod, string> = {
-  screenshot: "/api/import/screenshot",
-  pdf: "/api/import/pdf",
-  csv: "/api/import/csv",
-};
-
-const FIELD_NAME_BY_METHOD: Record<UploadMethod, string> = {
-  screenshot: "image",
-  pdf: "file",
-  csv: "file",
 };
 
 export default function ImportForm() {

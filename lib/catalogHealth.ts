@@ -1,5 +1,6 @@
 import { imageSize } from "image-size";
 import type { Album, Track, IssueType, IssueSeverity } from "@/types/catalog";
+import { hasSongwriterCredit } from "@/lib/credits";
 
 // Common minimum most DSPs will accept without a manual rejection.
 export const MIN_ARTWORK_DIMENSION = 3000;
@@ -93,10 +94,7 @@ function checkAlbumFields(album: Album, tracks: Track[]): IssueFinding[] {
         message: `Track ${track.position}. "${track.title}" has no audio file attached.`,
       });
     }
-    // Credit.role is freeform text, not a fixed enum — a substring match is
-    // the only non-guessing way to tell "no songwriter credit at all" apart
-    // from "has other credits (producer, performer) but not this one".
-    if (!track.credits.some((c) => c.role.toLowerCase().includes("songwriter"))) {
+    if (!hasSongwriterCredit(track)) {
       findings.push({
         album_id: album.id,
         track_id: track.id,

@@ -1,7 +1,14 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import type { ExtractedAlbumDraft } from "@/types/catalog";
+import {
+  type UploadMethod,
+  METHOD_LABEL,
+  ACCEPT_BY_METHOD,
+  ENDPOINT_BY_METHOD,
+  FIELD_NAME_BY_METHOD,
+} from "@/lib/importSource";
 
 interface EditableTrack {
   key: string;
@@ -36,6 +43,75 @@ function draftFromExtraction(extracted: ExtractedAlbumDraft): EditableDraft {
   };
 }
 
+/** Fills a blank header field from a later file's extraction; a value
+ * already captured (from this file or an earlier one in the same import)
+ * is never silently overwritten. */
+function fillBlank(current: string, incoming: string | undefined): string {
+  return current.trim() ? current : (incoming ?? "").trim();
+}
+
+/** Folds one or more additionally-extracted releases into the draft
+ * already being built: header fields only fill in gaps, tracks append in
+ * extraction order (position continues from wherever the draft's track
+ * list currently ends — final ordering is still whatever the confirm
+ * table shows after any manual reordering). Multiple `extras` happens
+ * when the added file is a multi-row CSV/Excel sheet; every row's tracks
+ * are folded into this one album rather than spawning separate albums,
+ * since splitting into multiple albums here is explicitly out of scope. */
+function mergeExtractionIntoDraft(prev: EditableDraft, extras: ExtractedAlbumDraft[]): EditableDraft {
+  let merged = { ...prev };
+  const newTracks: EditableTrack[] = [];
+  for (const extra of extras) {
+    merged = {
+      ...merged,
+      title: fillBlank(merged.title, extra.title),
+      artist: fillBlank(merged.artist, extra.artist),
+      release_date: fillBlank(merged.release_date, extra.release_date),
+      upc: fillBlank(merged.upc, extra.upc),
+      genre: fillBlank(merged.genre, extra.genre),
+    };
+    const sorted = [...extra.tracks].sort((a, b) => a.position - b.position);
+    for (const t of sorted) {
+      newTracks.push({ key: crypto.randomUUID(), title: t.title, isrc: t.isrc ?? "" });
+    }
+  }
+  return { ...merged, tracks: [...merged.tracks, ...newTracks] };
+}
+
+function normalizeTitle(title: string): string {
+  return title.trim().toLowerCase();
+}
+
+/** Flags tracks that share a normalized title or a non-empty ISRC with
+ * another row in the draft — the signal for "a re-uploaded file
+ * re-captured a track already here" (e.g. a retried screenshot). Purely a
+ * presentation-layer check recomputed from current state, so resolving one
+ * (editing or removing a row) clears the flag immediately rather than
+ * leaving a stale warning behind. */
+function computeDuplicateKeys(tracks: EditableTrack[]): Set<string> {
+  const byTitle = new Map<string, string[]>();
+  const byIsrc = new Map<string, string[]>();
+  for (const t of tracks) {
+    const title = normalizeTitle(t.title);
+    if (title) {
+      const list = byTitle.get(title) ?? [];
+      list.push(t.key);
+      byTitle.set(title, list);
+    }
+    const isrc = t.isrc.trim().toLowerCase();
+    if (isrc) {
+      const list = byIsrc.get(isrc) ?? [];
+      list.push(t.key);
+      byIsrc.set(isrc, list);
+    }
+  }
+  const duplicates = new Set<string>();
+  for (const list of [...byTitle.values(), ...byIsrc.values()]) {
+    if (list.length > 1) list.forEach((k) => duplicates.add(k));
+  }
+  return duplicates;
+}
+
 /** One release's editable confirm table. Manages its own draft state
  * (initialized once from `initialDraft`) and owns the save call — reused by
  * every import path (screenshot, PDF, CSV/Excel), which all funnel into the
@@ -59,6 +135,61 @@ export default function ConfirmAlbumForm({
   const [draft, setDraft] = useState<EditableDraft>(() => draftFromExtraction(initialDraft));
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
+
+  // "Add another file to this import" — a second (or third...) extraction
+  // that appends into this same draft rather than starting a new album.
+  const [addOpen, setAddOpen] = useState(false);
+  const [addMethod, setAddMethod] = useState<UploadMethod>("screenshot");
+  const [addLoading, setAddLoading] = useState(false);
+  const [addError, setAddError] = useState<string | null>(null);
+  const [filesCombined, setFilesCombined] = useState(1);
+  const [extraWarnings, setExtraWarnings] = useState<string[]>([]);
+  const addFileInputRef = useRef<HTMLInputElement>(null);
+
+  const duplicateKeys = useMemo(() => computeDuplicateKeys(draft.tracks), [draft.tracks]);
+
+  async function handleAddFile(e: React.FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+    const file = addFileInputRef.current?.files?.[0];
+    if (!file) {
+      setAddError("Choose a file to add.");
+      return;
+    }
+
+    setAddLoading(true);
+    setAddError(null);
+
+    try {
+      const formData = new FormData();
+      formData.append(FIELD_NAME_BY_METHOD[addMethod], file);
+
+      const res = await fetch(ENDPOINT_BY_METHOD[addMethod], { method: "POST", body: formData });
+      const body = await res.json();
+
+      if (!res.ok) {
+        setAddError(body.error ?? "Import failed.");
+        return;
+      }
+
+      // CSV/Excel can list several releases in one sheet; every row's
+      // tracks fold into this one album (splitting into separate albums
+      // here is out of scope — see mergeExtractionIntoDraft).
+      const albums: ExtractedAlbumDraft[] =
+        addMethod === "csv" ? (body.albums as ExtractedAlbumDraft[]) : [body as ExtractedAlbumDraft];
+
+      setDraft((prev) => mergeExtractionIntoDraft(prev, albums));
+      if (addMethod === "csv" && Array.isArray(body.warnings) && body.warnings.length > 0) {
+        setExtraWarnings((prev) => [...prev, ...(body.warnings as string[])]);
+      }
+      setFilesCombined((n) => n + 1);
+      setAddOpen(false);
+      if (addFileInputRef.current) addFileInputRef.current.value = "";
+    } catch {
+      setAddError("Could not reach the extraction service.");
+    } finally {
+      setAddLoading(false);
+    }
+  }
 
   function updateField<K extends keyof Omit<EditableDraft, "tracks">>(
     field: K,
@@ -103,6 +234,14 @@ export default function ConfirmAlbumForm({
     }
     if (draft.tracks.length === 0 || draft.tracks.some((t) => !t.title.trim())) {
       setSaveError("Every track needs a title, and there must be at least one track.");
+      return;
+    }
+    if (
+      duplicateKeys.size > 0 &&
+      !window.confirm(
+        `${duplicateKeys.size} track${duplicateKeys.size === 1 ? "" : "s"} highlighted below look like possible duplicates (same title or ISRC as another row). Save anyway?`
+      )
+    ) {
       return;
     }
 
@@ -172,7 +311,12 @@ export default function ConfirmAlbumForm({
 
       <div className="space-y-4 rounded-lg border border-neutral-200 bg-white p-6">
         <div className="flex items-center justify-between">
-          <h2 className="text-sm font-medium text-neutral-700">Tracks</h2>
+          <div>
+            <h2 className="text-sm font-medium text-neutral-700">Tracks</h2>
+            {filesCombined > 1 && (
+              <p className="text-xs text-neutral-500">Combined from {filesCombined} files.</p>
+            )}
+          </div>
           <button
             type="button"
             onClick={addTrack}
@@ -181,6 +325,15 @@ export default function ConfirmAlbumForm({
             + Add track
           </button>
         </div>
+
+        {duplicateKeys.size > 0 && (
+          <div className="rounded border border-amber-300 bg-amber-50 p-3 text-sm text-amber-800">
+            {duplicateKeys.size} track{duplicateKeys.size === 1 ? "" : "s"} highlighted below{" "}
+            {duplicateKeys.size === 1 ? "looks" : "look"} like possible duplicates (same title or
+            ISRC as another row) — likely a retried or overlapping file. Review and edit or remove
+            before saving.
+          </div>
+        )}
 
         <table className="w-full text-sm">
           <thead>
@@ -192,15 +345,25 @@ export default function ConfirmAlbumForm({
             </tr>
           </thead>
           <tbody>
-            {draft.tracks.map((track, index) => (
-              <tr key={track.key} className="border-t border-neutral-100">
+            {draft.tracks.map((track, index) => {
+              const isDuplicate = duplicateKeys.has(track.key);
+              return (
+              <tr
+                key={track.key}
+                className={`border-t border-neutral-100 ${isDuplicate ? "bg-amber-50" : ""}`}
+              >
                 <td className="py-2 text-neutral-500">{index + 1}</td>
                 <td className="py-2 pr-2">
                   <input
                     value={track.title}
                     onChange={(e) => updateTrack(track.key, "title", e.target.value)}
-                    className="w-full rounded border border-neutral-300 px-2 py-1"
+                    className={`w-full rounded border px-2 py-1 ${isDuplicate ? "border-amber-400" : "border-neutral-300"}`}
                   />
+                  {isDuplicate && (
+                    <p className="mt-1 text-xs text-amber-700">
+                      ⚠ Possible duplicate — same title or ISRC as another row
+                    </p>
+                  )}
                 </td>
                 <td className="py-2 pr-2">
                   <input
@@ -238,9 +401,88 @@ export default function ConfirmAlbumForm({
                   </button>
                 </td>
               </tr>
-            ))}
+              );
+            })}
           </tbody>
         </table>
+      </div>
+
+      <div className="space-y-3 rounded-lg border border-neutral-200 bg-white p-6">
+        <div className="flex items-center justify-between">
+          <h2 className="text-sm font-medium text-neutral-700">Add another file to this import</h2>
+          {!addOpen && (
+            <button
+              type="button"
+              onClick={() => setAddOpen(true)}
+              className="text-sm font-medium text-neutral-900 underline"
+            >
+              + Add another file
+            </button>
+          )}
+        </div>
+
+        {addOpen && (
+          <form onSubmit={handleAddFile} className="space-y-3">
+            <p className="text-xs text-neutral-500">
+              Its tracks are appended to the list above — reorder or edit as needed before saving.
+              Album details already filled in are kept; this only fills fields still blank.
+            </p>
+            <div className="flex flex-wrap items-center gap-2">
+              {(Object.keys(METHOD_LABEL) as UploadMethod[]).map((m) => (
+                <button
+                  key={m}
+                  type="button"
+                  onClick={() => setAddMethod(m)}
+                  className={`rounded-full border px-3 py-1 text-xs font-medium ${
+                    addMethod === m
+                      ? "border-neutral-900 bg-neutral-900 text-white"
+                      : "border-neutral-300 text-neutral-600"
+                  }`}
+                >
+                  {METHOD_LABEL[m]}
+                </button>
+              ))}
+            </div>
+            <input
+              ref={addFileInputRef}
+              type="file"
+              accept={ACCEPT_BY_METHOD[addMethod]}
+              className="block w-full text-sm text-neutral-600 file:mr-4 file:rounded-md file:border-0 file:bg-neutral-900 file:px-4 file:py-2 file:text-sm file:font-medium file:text-white"
+            />
+            {addError && <p className="text-sm text-red-600">{addError}</p>}
+            <div className="flex items-center gap-3">
+              <button
+                type="submit"
+                disabled={addLoading}
+                className="rounded-md bg-neutral-900 px-4 py-2 text-sm font-medium text-white disabled:opacity-50"
+              >
+                {addLoading ? "Extracting…" : "Extract & append"}
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setAddOpen(false);
+                  setAddError(null);
+                }}
+                className="text-sm text-neutral-500 underline"
+              >
+                Cancel
+              </button>
+            </div>
+          </form>
+        )}
+
+        {extraWarnings.length > 0 && (
+          <div className="rounded border border-amber-300 bg-amber-50 p-3 text-sm text-amber-800">
+            <p className="font-medium">{extraWarnings.length} row(s) skipped while adding files:</p>
+            <ul className="mt-1 list-disc pl-5">
+              {extraWarnings.slice(0, 10).map((w, i) => (
+                <li key={i}>{w}</li>
+              ))}
+              {extraWarnings.length > 10 && <li>…and {extraWarnings.length - 10} more.</li>}
+            </ul>
+          </div>
+        )}
       </div>
 
       {saveError && <p className="text-sm text-red-600">{saveError}</p>}

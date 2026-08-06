@@ -7,6 +7,7 @@ import type { Album, CatalogIssue } from "@/types/catalog";
 import { computeCatalogScore, SCORE_FRAMING_NOTE } from "@/lib/migrationScore";
 import { ScoreBadge, ScoreProgressBar } from "./scoreDisplay";
 import RunHealthCheckButton from "./RunHealthCheckButton";
+import SetDefaultSongwriterPanel from "./SetDefaultSongwriterPanel";
 import DeleteAlbumButton from "./DeleteAlbumButton";
 import GenerateReportButton from "./GenerateReportButton";
 import DownloadBackupButton from "./DownloadBackupButton";
@@ -105,6 +106,12 @@ export default async function HealthPage() {
                 </span>
               )}
               {albums.length > 0 && <DownloadBackupButton />}
+              {albums.length > 0 && (
+                <span className="inline-flex items-center">
+                  <SetDefaultSongwriterPanel scope="catalog" />
+                  <PremiumTag unlocked={isPremium} />
+                </span>
+              )}
               <RunHealthCheckButton />
             </>
           }
@@ -236,6 +243,7 @@ export default async function HealthPage() {
                         >
                           Edit
                         </Link>
+                        <SetDefaultSongwriterPanel scope="album" albumId={album.id} compact />
                         <Link
                           href={`/albums/attach?id=${album.id}`}
                           className="text-ink underline hover:text-brass"
@@ -251,7 +259,7 @@ export default async function HealthPage() {
                           </Link>
                           <PremiumTag unlocked={isPremium} />
                         </span>
-                        <DeleteAlbumButton albumId={album.id} title={album.title} />
+                        <DeleteAlbumButton albumId={album.id} title={album.title} trackCount={trackCount} />
                       </div>
                     </div>
                     {albumIssues.length > 0 && (

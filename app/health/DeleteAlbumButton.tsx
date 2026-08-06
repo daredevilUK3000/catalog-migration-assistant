@@ -3,13 +3,22 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 
-export default function DeleteAlbumButton({ albumId, title }: { albumId: string; title: string }) {
+export default function DeleteAlbumButton({
+  albumId,
+  title,
+  trackCount,
+}: {
+  albumId: string;
+  title: string;
+  trackCount: number;
+}) {
   const router = useRouter();
   const [deleting, setDeleting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   async function handleDelete() {
-    if (!window.confirm(`Delete "${title}"? This removes the album, its tracks, and all uploaded files. This can't be undone.`)) {
+    const trackPhrase = trackCount > 0 ? ` and its ${trackCount} track${trackCount === 1 ? "" : "s"}` : "";
+    if (!window.confirm(`Delete "${title}"${trackPhrase}? This can't be undone.`)) {
       return;
     }
     setDeleting(true);
