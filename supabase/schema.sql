@@ -150,6 +150,15 @@ values
   ('tunecore', 'TuneCore', false, '{}'::jsonb)
 on conflict (slug) do nothing;
 
+-- CD Baby: added after the other four, once its submission flow was
+-- sourced (see the export_field_map update further below for how, since
+-- there was no free way to view the actual submission form directly). No
+-- bulk CSV feature turned up anywhere in CD Baby's own documentation.
+insert into distributor_profiles (slug, display_name, supports_bulk_csv, export_field_map)
+values
+  ('cdbaby', 'CD Baby', false, '{}'::jsonb)
+on conflict (slug) do nothing;
+
 -- DistroKid: verified from the real upload/edit form's saved HTML (field
 -- names read directly from `name=` attributes and their adjacent label
 -- text) — a different confidence profile than Ditto's screenshots. Field
@@ -293,6 +302,72 @@ set export_field_map = '{
   ]
 }'::jsonb
 where slug = 'ditto';
+
+-- CD Baby: added without a paid CD Baby account (its submission flow sits
+-- behind a per-release fee, so there was no free way to view it directly).
+-- Sourced instead from two things together: (1) CD Baby's own public Help
+-- Center — no login required — specifically "Understanding the Title
+-- Overview Page" (names the real section structure: Summary Box, Tracks &
+-- Audio, Distribution, Social Video Monetization, CDB Boost, Service
+-- Agreements, and the fields inside each), "How do I add artist credits to
+-- my release?" (names the actual sub-pages: Basic Album Information vs
+-- Basic Single Information — albums and singles genuinely diverge here,
+-- same as Ditto — plus Track Information for per-track roles and a
+-- separate Songwriter Information step), "How do I add or edit songwriters
+-- for my release?" (the real Songwriter Bank fields: legal name, country,
+-- PRO, Music/Lyrics contribution + %, publisher), and "Can I get ISRCs
+-- from CD Baby?" (confirms auto-assignment at inspection unless you supply
+-- your own — same pattern as Ditto's ISRC toggle). (2) Four screenshots of
+-- an actual CD Baby account's Title Overview page for a real release,
+-- corroborating that every field named above is real and cross-checking
+-- the section grouping against the docs.
+--
+-- Two fields visible in the screenshots were deliberately left out: Spotify
+-- URI and the Partner Artist IDs (Apple Music/iTunes, YouTube Music, etc).
+-- Neither appears in the Help Center's own list of Summary Box fields, and
+-- both are values a platform assigns *after* distribution, not something
+-- typed in during submission — this export map is for what you fill in on
+-- the target form, not a dump of everything the account page displays.
+-- Same reasoning excludes FastForward (paid expedited-inspection add-on)
+-- and CDB Boost (a separate upsell, not release metadata).
+update distributor_profiles
+set export_field_map = '{
+  "fields": [
+    { "source": "title", "label": "Release Title", "step": "Title Overview → Basic Album Information (Basic Single Information for a single)" },
+    { "source": "artist", "label": "Artist Name", "step": "Title Overview → Basic Album Information (Basic Single Information for a single)" },
+    { "source": "record_label", "label": "Record Label", "step": "Title Overview → Basic Album Information (Basic Single Information for a single)" },
+    { "source": "upc", "label": "UPC (CD Baby auto-assigns one during inspection unless you already have your own)", "step": "Title Overview → Basic Album Information (Basic Single Information for a single)" },
+    { "source": "release_date", "label": "Release Date", "step": "Title Overview → Basic Album Information (Basic Single Information for a single)" },
+    { "source": "pre_order_date", "label": "Pre-Order Date (optional)", "step": "Title Overview → Basic Album Information (Basic Single Information for a single)" },
+    { "source": "genre", "label": "Primary Genre", "step": "Title Overview → Basic Album Information (Basic Single Information for a single)" },
+    { "source": "secondary_genre", "label": "Secondary Genre (optional)", "step": "Title Overview → Basic Album Information (Basic Single Information for a single)" },
+    { "source": "subgenre", "label": "Primary Subgenre", "step": "Title Overview → Basic Album Information (Basic Single Information for a single)" },
+    { "source": "secondary_subgenre", "label": "Secondary Subgenre", "step": "Title Overview → Basic Album Information (Basic Single Information for a single)" },
+    { "source": "mood_style", "label": "Mood/Style", "step": "Title Overview → Basic Album Information (Basic Single Information for a single)" },
+    { "source": "language", "label": "Album Language", "step": "Title Overview → Basic Album Information (Basic Single Information for a single)" },
+    { "source": "artist_location", "label": "Artist Location", "step": "Title Overview → Basic Album Information (Basic Single Information for a single)" },
+    { "source": "artist_sounds_like", "label": "Artist Sounds Like (optional — similar existing artists)", "step": "Title Overview → Basic Album Information (Basic Single Information for a single)" },
+    { "source": "track.title", "label": "Track Title", "step": "Title Overview → Track Information (per track)" },
+    { "source": "track.composition_type", "label": "Composition Type (Original / Cover / Public Domain)", "step": "Title Overview → Track Information (per track)" },
+    { "source": "track.isrc", "label": "ISRC (CD Baby auto-assigns one during inspection unless you already have your own)", "step": "Title Overview → Track Information (per track)" },
+    { "source": "track.explicit", "label": "Parental Advisory (explicit content)", "step": "Title Overview → Track Information (per track)" },
+    { "source": "track.studio_or_live", "label": "Studio or Live Recording", "step": "Title Overview → Track Information (per track)" },
+    { "source": "track.available_for_sale", "label": "Available for Sale as an individual track", "step": "Title Overview → Track Information (per track)" },
+    { "source": "track.performance_language", "label": "Performance Language", "step": "Title Overview → Track Information (per track)" },
+    { "source": "track.featured_artists", "label": "Featuring credit(s)", "step": "Title Overview → Track Information (per track) → add-role" },
+    { "source": "track.producer_credits", "label": "Producer credit(s)", "step": "Title Overview → Track Information (per track) → add-role" },
+    { "source": "track.remixer_credit", "label": "Remixer credit", "step": "Title Overview → Track Information (per track) → add-role" },
+    { "source": "track.production_engineering_credits", "label": "Production and Engineering credit(s)", "step": "Title Overview → Track Information (per track) → add-role" },
+    { "source": "track.performer_credits", "label": "Other Contributors — performer credits (e.g. Vocals, Guitar)", "step": "Title Overview → Track Information (per track) → add-role" },
+    { "source": "track.composer", "label": "Composer (Music contribution)", "step": "Title Overview → Songwriter Information (per track, via Songwriter Bank)" },
+    { "source": "track.lyricist", "label": "Lyricist (Lyrics contribution)", "step": "Title Overview → Songwriter Information (per track, via Songwriter Bank)" },
+    { "source": "track.songwriter_split_percent", "label": "Songwriter ownership % (must total 100% across all songwriters on the track)", "step": "Title Overview → Songwriter Information (per track, via Songwriter Bank)" },
+    { "source": "track.songwriter_pro", "label": "Songwriter PRO affiliation (if applicable)", "step": "Title Overview → Songwriter Information (per track, via Songwriter Bank)" },
+    { "source": "track.publisher", "label": "Publisher (or \"No\" if none)", "step": "Title Overview → Songwriter Information (per track, via Songwriter Bank)" },
+    { "source": "track.credits", "label": "All credits on file (reference only — sort names into Composer/Lyricist/roles above by hand)", "step": "Title Overview → Songwriter Information (per track, via Songwriter Bank)" }
+  ]
+}'::jsonb
+where slug = 'cdbaby';
 
 -- ============================================================
 -- MIGRATION RECORDS
