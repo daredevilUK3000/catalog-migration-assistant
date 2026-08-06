@@ -8,6 +8,7 @@ import { computeCatalogScore, SCORE_FRAMING_NOTE } from "@/lib/migrationScore";
 import { ScoreBadge, ScoreProgressBar } from "./scoreDisplay";
 import RunHealthCheckButton from "./RunHealthCheckButton";
 import SetDefaultSongwriterPanel from "./SetDefaultSongwriterPanel";
+import SetDefaultGenrePanel from "./SetDefaultGenrePanel";
 import NextStepBanner from "@/components/ui/NextStepBanner";
 import { stepEyebrow } from "@/lib/workflowSteps";
 import DeleteAlbumButton from "./DeleteAlbumButton";
@@ -112,6 +113,12 @@ export default async function HealthPage() {
               {albums.length > 0 && (
                 <span className="inline-flex items-center">
                   <SetDefaultSongwriterPanel scope="catalog" />
+                  <PremiumTag unlocked={isPremium} />
+                </span>
+              )}
+              {albums.length > 0 && (
+                <span className="inline-flex items-center">
+                  <SetDefaultGenrePanel />
                   <PremiumTag unlocked={isPremium} />
                 </span>
               )}
