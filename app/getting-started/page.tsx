@@ -78,7 +78,7 @@ export default function GettingStartedPage() {
         </div>
 
         <div className="space-y-4">
-          <h2 className="text-sm font-medium uppercase tracking-wide text-ink/50">Your six steps</h2>
+          <h2 className="text-sm font-medium uppercase tracking-wide text-ink/50">Your five steps</h2>
           <ol className="space-y-4">
             {STEPS.map((s) => (
               <li key={s.n}>
