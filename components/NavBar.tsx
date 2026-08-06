@@ -8,6 +8,7 @@ import SignOutButton from "./SignOutButton";
 const NAV_LINKS = [
   { href: "/import", label: "Import" },
   { href: "/health", label: "Catalog health" },
+  { href: "/albums/export-all", label: "Export packs" },
   { href: "/migrations", label: "Migration tracker" },
   { href: "/billing", label: "Billing" },
 ] as const;
