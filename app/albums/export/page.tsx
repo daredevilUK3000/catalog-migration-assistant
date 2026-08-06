@@ -69,6 +69,12 @@ export default async function ExportPage({
           </p>
         </div>
 
+        <p className="rounded-lg border border-neutral-200 bg-white px-4 py-3 text-sm text-neutral-500">
+          You can close this tab and come back anytime — nothing here is "in progress." This page
+          just builds a live view from your already-saved catalog data; come back whenever you're
+          ready and pick your distributor again below.
+        </p>
+
         <form
           method="get"
           className="flex items-end gap-3 rounded-lg border border-neutral-200 bg-white p-6"
