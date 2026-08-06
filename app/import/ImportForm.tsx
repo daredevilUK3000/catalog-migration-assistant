@@ -129,7 +129,7 @@ export default function ImportForm() {
           title="Import releases"
           description={
             step === "done"
-              ? "Done — see the results below."
+              ? "Done — here's what to do next."
               : "Nothing is saved to your catalog until you confirm it below."
           }
         />
@@ -227,7 +227,7 @@ export default function ImportForm() {
         )}
 
         {step === "done" && (
-          <Card className="max-w-md space-y-4 p-6">
+          <Card className="max-w-lg space-y-4 p-6">
             {savedAlbums.length === 0 ? (
               <p className="text-ink">No releases were saved.</p>
             ) : (
@@ -237,6 +237,37 @@ export default function ImportForm() {
                     ? "Album saved to your catalog."
                     : `${savedAlbums.length} albums saved to your catalog.`}
                 </p>
+
+                <div className="rounded-md border border-ink/10 bg-ink/[0.03] p-4 text-sm text-ink/70">
+                  <p className="font-medium text-ink">What to do next</p>
+                  <ol className="mt-2 list-decimal space-y-1.5 pl-5">
+                    <li>
+                      <span className="font-medium text-ink">Attach files</span> — use the link next
+                      to each album below to add artwork and point the tool at the audio files on
+                      this computer (nothing is uploaded here, just verified).
+                    </li>
+                    <li>
+                      Then go to{" "}
+                      <Link href="/health" className="font-medium text-ink underline hover:text-brass">
+                        Catalog health
+                      </Link>{" "}
+                      and run a check — it flags missing ISRCs, undersized artwork, and other gaps
+                      before you try uploading anywhere else.
+                    </li>
+                    <li>
+                      Once it's clean, generate an export pack from the album's page and log
+                      progress in the{" "}
+                      <Link
+                        href="/migrations"
+                        className="font-medium text-ink underline hover:text-brass"
+                      >
+                        Migration tracker
+                      </Link>{" "}
+                      as you complete each step on your new distributor's site.
+                    </li>
+                  </ol>
+                </div>
+
                 <ul className="space-y-1">
                   {savedAlbums.map((album) => (
                     <li key={album.id} className="flex items-center justify-between text-sm">
