@@ -28,34 +28,30 @@ const STEPS = [
   {
     n: "1",
     title: "Import your catalog",
-    body: "Upload a screenshot, a CSV/Excel export, or a PDF release sheet — one release at a time, or a whole catalog in one CSV. AI extracts titles, ISRCs, and credits where needed; plain deterministic parsing handles CSV/Excel with no AI involved at all.",
+    body: "Upload a screenshot, a CSV/Excel export, or a PDF release sheet — one release at a time, or a whole catalog in one CSV. AI extracts titles, ISRCs, and credits where needed; plain deterministic parsing handles CSV/Excel with no AI involved at all. If one screenshot doesn't capture a whole tracklist legibly (a 20+ track album often won't), use \"Add another file to this import\" on the confirm screen to combine several files into the same album instead of starting over. You see everything extracted next to the source and can fix anything misread before it's saved — nothing reaches your permanent catalog until you confirm it.",
     cta: { href: "/import", label: "Start importing" },
   },
   {
     n: "2",
-    title: "Confirm what was extracted",
-    body: "Before anything is saved, you see the extracted data next to the source and can fix anything misread — this is the last moment AI is involved for that record. Nothing reaches your permanent catalog until you confirm it.",
+    title: "Attach files",
+    body: "Add artwork, and point the tool at your audio files on your own computer — it verifies they exist and are named right, but never uploads or stores the audio itself. Attach files from each album's page after importing; everything there saves automatically as you go, no separate save step.",
   },
   {
     n: "3",
-    title: "Attach files",
-    body: "Add artwork, and point the tool at your audio files on your own computer — it verifies they exist and are named right, but never uploads or stores the audio itself. Attach files from each album's page after importing.",
-  },
-  {
-    n: "4",
     title: "Run a catalog health check",
-    body: "Deterministic checks — missing or duplicate ISRCs, missing lyrics, undersized artwork, gaps in a tracklist — catch problems before they become a rejected upload on the new distributor's site.",
+    body: "Deterministic checks — missing or duplicate ISRCs, missing lyrics, undersized artwork, gaps in a tracklist — catch problems before they become a rejected upload on the new distributor's site. If you're a single-songwriter catalog or several releases share a genre, \"Set default songwriter\" and \"Set default genre\" on this page apply that value across every album that's missing it in one action, with an exact count shown before anything's touched.",
     cta: { href: "/health", label: "View catalog health" },
   },
   {
-    n: "5",
-    title: "Generate an export pack",
-    body: "Pick your target distributor from an album's page. If they support bulk CSV, you get a ready-to-upload file; otherwise a reference sheet arranged in the exact order their form asks for fields, so it's copy-paste instead of hunt-and-peck.",
+    n: "4",
+    title: "Generate export packs",
+    body: "Pick your target distributor (DistroKid, Ditto Music, CD Baby, and more as they're added) from an album's page. If they support bulk CSV, you get a ready-to-upload file; otherwise a reference sheet arranged in the exact order their form asks for fields, so it's copy-paste instead of hunt-and-peck. Got several albums ready at once? Batch-generate packs for all of them in one pass — one zip download, skipping albums whose pack is already up to date by default.",
+    cta: { href: "/albums/export-all", label: "Batch generate export packs" },
   },
   {
-    n: "6",
+    n: "5",
     title: "Track your migration",
-    body: "As you manually complete each step on the new distributor's actual site, mark it here — imported, files attached, health-checked, export pack generated, uploaded, verified. Nothing is auto-detected; every status is you reporting something you actually did.",
+    body: "As you manually complete each step on the new distributor's actual site, mark it here — imported, files attached, health-checked, export pack generated, uploaded, verified. Nothing is auto-detected; every status is you reporting something you actually did. Preserving stream history means requesting a takedown from your old distributor first — the Takedowns view (under Migration tracker) lets you batch-request takedowns across many albums at once, so their 2-4 week clearance windows overlap instead of stacking one at a time, with a running countdown per album.",
     cta: { href: "/migrations", label: "Open migration tracker" },
   },
 ];
@@ -111,9 +107,12 @@ export default function GettingStartedPage() {
         </div>
 
         <Card className="p-6 text-center">
-          <p className="text-ink/70">Ready to bring in your first release?</p>
+          <p className="text-ink/70">
+            Jump back in whenever you need to — import another release, or pick up at any step
+            above.
+          </p>
           <Link href="/import" className={`mt-3 ${LINK_BUTTON_PRIMARY}`}>
-            Import your first release
+            Import a release
           </Link>
         </Card>
       </div>

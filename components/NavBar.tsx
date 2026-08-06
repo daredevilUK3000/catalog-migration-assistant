@@ -6,6 +6,7 @@ import LogoMark from "./LogoMark";
 import SignOutButton from "./SignOutButton";
 
 const NAV_LINKS = [
+  { href: "/getting-started", label: "Getting started" },
   { href: "/import", label: "Import" },
   { href: "/health", label: "Catalog health" },
   { href: "/albums/export-all", label: "Export packs" },
