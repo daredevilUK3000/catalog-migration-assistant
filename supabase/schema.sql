@@ -441,27 +441,41 @@ alter table migration_records add column if not exists export_pack_generated_at 
 -- Single-user catalog ownership — straightforward auth.uid() checks.
 -- (No org-table subquery needed here since ownership is direct, not via
 -- an intermediate org membership table.)
+--
+-- Every create policy below is preceded by a matching drop policy if
+-- exists — unlike create table/column/function elsewhere in this file,
+-- Postgres has no "create policy if not exists" or "create or replace
+-- policy", so without the explicit drop this whole file was NOT actually
+-- safe to re-run as claimed: a second run failed here with "policy ...
+-- already exists" and — because the Supabase SQL editor runs a pasted
+-- multi-statement script as one implicit transaction — silently rolled
+-- back everything earlier in the same run too, including new columns
+-- added further up. Fixed 2026-08-06 after exactly that happened.
 -- ============================================================
 alter table albums enable row level security;
 alter table tracks enable row level security;
 alter table catalog_issues enable row level security;
 alter table migration_records enable row level security;
 
+drop policy if exists "Users manage their own albums" on albums;
 create policy "Users manage their own albums"
   on albums for all
   using (auth.uid() = user_id)
   with check (auth.uid() = user_id);
 
+drop policy if exists "Users manage tracks on their own albums" on tracks;
 create policy "Users manage tracks on their own albums"
   on tracks for all
   using (exists (select 1 from albums where albums.id = tracks.album_id and albums.user_id = auth.uid()))
   with check (exists (select 1 from albums where albums.id = tracks.album_id and albums.user_id = auth.uid()));
 
+drop policy if exists "Users manage issues on their own albums" on catalog_issues;
 create policy "Users manage issues on their own albums"
   on catalog_issues for all
   using (exists (select 1 from albums where albums.id = catalog_issues.album_id and albums.user_id = auth.uid()))
   with check (exists (select 1 from albums where albums.id = catalog_issues.album_id and albums.user_id = auth.uid()));
 
+drop policy if exists "Users manage migration records on their own albums" on migration_records;
 create policy "Users manage migration records on their own albums"
   on migration_records for all
   using (exists (select 1 from albums where albums.id = migration_records.album_id and albums.user_id = auth.uid()))
@@ -469,6 +483,7 @@ create policy "Users manage migration records on their own albums"
 
 -- distributor_profiles is shared reference data — readable by any authenticated user, not user-owned.
 alter table distributor_profiles enable row level security;
+drop policy if exists "Authenticated users can read distributor profiles" on distributor_profiles;
 create policy "Authenticated users can read distributor profiles"
   on distributor_profiles for select
   using (auth.role() = 'authenticated');
@@ -497,6 +512,7 @@ create index if not exists idx_profiles_stripe_customer_id on profiles(stripe_cu
 -- (bypasses RLS) — same convention as every other write path in this app —
 -- so only a self-read policy is needed here.
 alter table profiles enable row level security;
+drop policy if exists "Users can view their own profile" on profiles;
 create policy "Users can view their own profile"
   on profiles for select
   using (auth.uid() = id);
