@@ -56,6 +56,11 @@ export default async function MigrationsPage() {
           eyebrow={stepEyebrow(5)}
           title="Migration tracker"
           description="Every status here is you reporting something you actually did on the distributor's own site — nothing is auto-detected or automated."
+          actions={
+            <Link href="/migrations/takedowns" className={LINK_BUTTON_SECONDARY}>
+              Takedowns
+            </Link>
+          }
         />
 
         {profiles.length === 0 && (

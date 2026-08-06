@@ -407,6 +407,35 @@ create table if not exists migration_records (
 
 create index if not exists idx_migration_records_album_id on migration_records(album_id);
 
+-- Takedown Batch Scheduler + Batch Export Pack Generation feature.
+-- requested_at pairs with takedown_status = 'requested', same convention
+-- as uploaded_at/verified_at pairing with status = 'uploaded'/'verified'
+-- above — stamped once, on first arrival, never overwritten by re-selecting
+-- the same status.
+--
+-- estimated_days_min/max back the takedown countdown display ("likely
+-- clears in ~9-16 days"). Deliberately per-record and user-editable at
+-- request time rather than a single hardcoded number or a shared
+-- per-distributor setting: real-world takedown clearance time is not
+-- something this app can observe or verify, varies by distributor, and a
+-- shared editable setting would mean one user's guess silently changes
+-- what every other user of this app sees for that distributor — so it
+-- lives on the record the user themselves is looking at, defaulting to a
+-- plain 14-28 day (2-4 week) window when a takedown is marked requested,
+-- adjustable per batch request if real experience differs.
+--
+-- export_pack_generated_at backs the "skip already-generated, unchanged"
+-- default in batch export pack generation — compared against the album's
+-- and its tracks' own updated_at at generation time. This is a staleness
+-- watermark only; the export pack's actual content is never stored
+-- anywhere (see the Export Pack page's own "nothing here is saved" note —
+-- packs are always rebuilt live from current catalog data, batch
+-- generation is no exception).
+alter table migration_records add column if not exists requested_at timestamptz;
+alter table migration_records add column if not exists estimated_days_min integer;
+alter table migration_records add column if not exists estimated_days_max integer;
+alter table migration_records add column if not exists export_pack_generated_at timestamptz;
+
 -- ============================================================
 -- ROW LEVEL SECURITY
 -- Single-user catalog ownership — straightforward auth.uid() checks.
@@ -471,6 +500,46 @@ alter table profiles enable row level security;
 create policy "Users can view their own profile"
   on profiles for select
   using (auth.uid() = id);
+
+-- ============================================================
+-- updated_at AUTO-STAMP
+-- Added for the batch export pack "skip already-generated, unchanged"
+-- staleness check (compares migration_records.export_pack_generated_at
+-- against albums.updated_at / tracks.updated_at) — meaningless unless
+-- updated_at actually reflects real edits. Every updated_at column in this
+-- schema up to this point was `default now()` at INSERT time only and
+-- never touched again; no write path anywhere set it explicitly on UPDATE.
+-- A trigger fixes this generically, for every future write path too,
+-- rather than remembering to stamp it by hand in each route. Safe to
+-- re-run.
+-- ============================================================
+create or replace function set_updated_at()
+returns trigger as $$
+begin
+  new.updated_at = now();
+  return new;
+end;
+$$ language plpgsql;
+
+drop trigger if exists set_albums_updated_at on albums;
+create trigger set_albums_updated_at
+  before update on albums
+  for each row execute function set_updated_at();
+
+drop trigger if exists set_tracks_updated_at on tracks;
+create trigger set_tracks_updated_at
+  before update on tracks
+  for each row execute function set_updated_at();
+
+drop trigger if exists set_migration_records_updated_at on migration_records;
+create trigger set_migration_records_updated_at
+  before update on migration_records
+  for each row execute function set_updated_at();
+
+drop trigger if exists set_profiles_updated_at on profiles;
+create trigger set_profiles_updated_at
+  before update on profiles
+  for each row execute function set_updated_at();
 
 -- ============================================================
 -- STORAGE BUCKETS

@@ -8,6 +8,18 @@ export type MigrationStatus =
   | "uploaded"
   | "verified";
 
+/** Canonical progression order — used wherever a status update needs to
+ * avoid regressing an album backwards (e.g. batch export pack generation
+ * shouldn't knock an already-"uploaded" album back to "export_pack_generated"). */
+export const MIGRATION_STATUS_ORDER: MigrationStatus[] = [
+  "imported",
+  "files_attached",
+  "health_checked",
+  "export_pack_generated",
+  "uploaded",
+  "verified",
+];
+
 export type TakedownStatus = "not_requested" | "requested" | "processing" | "cleared";
 
 export type IssueType =
@@ -109,6 +121,21 @@ export interface MigrationRecord {
   takedown_status: TakedownStatus;
   uploaded_at: string | null;
   verified_at: string | null;
+  // Stamped once, when takedown_status first becomes "requested" — never
+  // overwritten by re-selecting the same status (same convention as
+  // uploaded_at/verified_at above).
+  requested_at: string | null;
+  // User-editable countdown window for this specific takedown request —
+  // defaults to 14/28 (2-4 weeks) when a takedown is marked requested, but
+  // deliberately not a shared/global setting: real clearance time isn't
+  // something this app can observe, so it lives per-record rather than
+  // silently changing what every user sees for a given distributor.
+  estimated_days_min: number | null;
+  estimated_days_max: number | null;
+  // Staleness watermark for batch export pack generation's "skip
+  // already-generated, unchanged" default — compared against the album's
+  // and its tracks' own updated_at, never a stored copy of the pack itself.
+  export_pack_generated_at: string | null;
   created_at: string;
   updated_at: string;
 }

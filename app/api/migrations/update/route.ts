@@ -3,6 +3,7 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { getCurrentUserId } from "@/lib/auth/currentUser";
 import { ownsAlbum } from "@/lib/auth/ownership";
 import type { MigrationRecord, MigrationStatus, TakedownStatus } from "@/types/catalog";
+import { DEFAULT_TAKEDOWN_MIN_DAYS, DEFAULT_TAKEDOWN_MAX_DAYS } from "@/lib/takedownEstimate";
 
 export const runtime = "nodejs";
 
@@ -90,6 +91,14 @@ export async function POST(request: NextRequest) {
   }
   if (takedownStatus !== undefined) {
     updates.takedown_status = takedownStatus;
+    if (takedownStatus === "requested" && !existing.requested_at) {
+      updates.requested_at = new Date().toISOString();
+      // Only seed a default window if one isn't already there (e.g. from a
+      // batch request that supplied its own, or set previously and then
+      // reset) — the batch-request route sets these explicitly itself.
+      if (existing.estimated_days_min == null) updates.estimated_days_min = DEFAULT_TAKEDOWN_MIN_DAYS;
+      if (existing.estimated_days_max == null) updates.estimated_days_max = DEFAULT_TAKEDOWN_MAX_DAYS;
+    }
   }
 
   const { data: updated, error: updateError } = await supabase

@@ -198,12 +198,17 @@ export default async function HealthPage() {
         {ready && albums.length > 0 && (
           <NextStepBanner
             step={4}
-            title="Generate your export pack"
-            description="Pick a target distributor from an album's page for a ready-to-upload file, or a copy-paste reference sheet in the exact order their form asks for fields."
-            cta={{
-              href: `/albums/export?id=${albums[0].id}`,
-              label: albums.length === 1 ? "Generate export pack" : `Start with "${albums[0].title}"`,
-            }}
+            title={albums.length > 1 ? "Generate your export packs" : "Generate your export pack"}
+            description={
+              albums.length > 1
+                ? "Pick a target distributor and generate export packs for several albums in one pass — a zip of ready-to-upload files or copy-paste reference sheets."
+                : "Pick a target distributor from an album's page for a ready-to-upload file, or a copy-paste reference sheet in the exact order their form asks for fields."
+            }
+            cta={
+              albums.length > 1
+                ? { href: "/albums/export-all", label: "Batch generate export packs" }
+                : { href: `/albums/export?id=${albums[0].id}`, label: "Generate export pack" }
+            }
             secondaryCta={albums.length > 1 ? { href: "#albums", label: "Jump to album list" } : undefined}
           />
         )}
