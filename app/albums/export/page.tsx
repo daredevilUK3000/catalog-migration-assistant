@@ -4,6 +4,8 @@ import { requirePremiumUserId } from "@/lib/auth/premium";
 import { buildExportPack, buildPasteQueue, type ExportRow } from "@/lib/exportPack";
 import type { Album, Track, DistributorProfile } from "@/types/catalog";
 import CopyQueueJsonButton from "./CopyQueueJsonButton";
+import NextStepBanner from "@/components/ui/NextStepBanner";
+import { stepEyebrow } from "@/lib/workflowSteps";
 
 // Reads live catalog state — must not be prerendered as static build-time HTML.
 export const dynamic = "force-dynamic";
@@ -53,6 +55,9 @@ export default async function ExportPage({
     <main className="min-h-screen bg-neutral-50 px-6 py-10">
       <div className="mx-auto max-w-3xl space-y-8">
         <div>
+          <p className="mb-2 font-mono text-xs uppercase tracking-[0.2em] text-amber-700">
+            {stepEyebrow(4)}
+          </p>
           <div className="flex items-center gap-2">
             <h1 className="text-2xl font-semibold text-neutral-900">Export pack</h1>
             <span className="rounded bg-amber-100 px-2 py-0.5 text-xs font-semibold uppercase tracking-wide text-amber-800">
@@ -103,7 +108,15 @@ export default async function ExportPage({
         )}
 
         {selectedProfile && (
-          <ExportPackView profile={selectedProfile} album={album} tracks={tracks} albumId={id} />
+          <>
+            <ExportPackView profile={selectedProfile} album={album} tracks={tracks} albumId={id} />
+            <NextStepBanner
+              step={5}
+              title="Upload it yourself, then log it here"
+              description={`This tool never touches your ${selectedProfile.display_name} account — copy the fields (or download the CSV) into their site yourself, then track progress in the Migration tracker.`}
+              cta={{ href: "/migrations", label: "Open Migration tracker" }}
+            />
+          </>
         )}
       </div>
     </main>

@@ -11,6 +11,7 @@ import {
   formatBytes,
   type LocalAudioFile,
 } from "@/lib/localAudio";
+import NextStepBanner from "@/components/ui/NextStepBanner";
 
 const ARTWORK_ACCEPT = "image/jpeg,image/png,image/webp";
 
@@ -290,6 +291,17 @@ export default function AttachFilesForm({ album, tracks }: { album: Album; track
           </ul>
         )}
       </div>
+
+      <p className="text-center text-xs text-neutral-500">
+        Everything above saves automatically as you go — there&apos;s no separate save step.
+      </p>
+
+      <NextStepBanner
+        step={3}
+        title="Run a Catalog health check"
+        description="Check for missing ISRCs, undersized artwork, and other gaps before you try uploading anywhere else."
+        cta={{ href: "/health", label: "Go to Catalog health" }}
+      />
     </div>
   );
 }

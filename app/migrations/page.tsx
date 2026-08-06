@@ -7,6 +7,7 @@ import MigrationRow from "./MigrationRow";
 import PageHeader from "@/components/ui/PageHeader";
 import Card from "@/components/ui/Card";
 import EmptyState from "@/components/ui/EmptyState";
+import { stepEyebrow } from "@/lib/workflowSteps";
 
 const LINK_BUTTON_SECONDARY =
   "focus-ring inline-flex items-center justify-center gap-2 rounded-md px-5 py-2.5 text-sm font-semibold transition-colors bg-transparent border border-ink/20 text-ink hover:bg-ink/[0.04] hover:border-ink/35";
@@ -52,6 +53,7 @@ export default async function MigrationsPage() {
     <main className="min-h-screen bg-paper px-6 py-10">
       <div className="mx-auto max-w-4xl space-y-8">
         <PageHeader
+          eyebrow={stepEyebrow(5)}
           title="Migration tracker"
           description="Every status here is you reporting something you actually did on the distributor's own site — nothing is auto-detected or automated."
         />

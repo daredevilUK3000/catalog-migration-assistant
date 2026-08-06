@@ -100,3 +100,20 @@ body {
   outline: 2px solid var(--brass-bright);
   outline-offset: 3px;
 }
+
+/* Attention pulse for NextStepBanner — a soft ring expanding off the brass
+   border, not a flash, so it reads as "look here" without being obnoxious.
+   Neutralized under prefers-reduced-motion by the rule above (forces
+   animation-duration to 0.01ms for every element). */
+@keyframes next-step-pulse {
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 rgb(var(--brass-rgb) / 0.35);
+  }
+  50% {
+    box-shadow: 0 0 0 9px rgb(var(--brass-rgb) / 0);
+  }
+}
+.next-step-glow {
+  animation: next-step-pulse 2.8s ease-in-out infinite;
+}

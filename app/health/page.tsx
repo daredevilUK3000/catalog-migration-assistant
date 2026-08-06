@@ -8,6 +8,8 @@ import { computeCatalogScore, SCORE_FRAMING_NOTE } from "@/lib/migrationScore";
 import { ScoreBadge, ScoreProgressBar } from "./scoreDisplay";
 import RunHealthCheckButton from "./RunHealthCheckButton";
 import SetDefaultSongwriterPanel from "./SetDefaultSongwriterPanel";
+import NextStepBanner from "@/components/ui/NextStepBanner";
+import { stepEyebrow } from "@/lib/workflowSteps";
 import DeleteAlbumButton from "./DeleteAlbumButton";
 import GenerateReportButton from "./GenerateReportButton";
 import DownloadBackupButton from "./DownloadBackupButton";
@@ -92,6 +94,7 @@ export default async function HealthPage() {
     <main className="min-h-screen bg-paper px-6 py-10">
       <div className="mx-auto max-w-4xl space-y-8">
         <PageHeader
+          eyebrow={stepEyebrow(3)}
           title="Catalog health"
           description="Deterministic checks against your confirmed catalog — no AI involved."
           actions={
@@ -185,6 +188,19 @@ export default async function HealthPage() {
           )}
         </Card>
 
+        {ready && albums.length > 0 && (
+          <NextStepBanner
+            step={4}
+            title="Generate your export pack"
+            description="Pick a target distributor from an album's page for a ready-to-upload file, or a copy-paste reference sheet in the exact order their form asks for fields."
+            cta={{
+              href: `/albums/export?id=${albums[0].id}`,
+              label: albums.length === 1 ? "Generate export pack" : `Start with "${albums[0].title}"`,
+            }}
+            secondaryCta={albums.length > 1 ? { href: "#albums", label: "Jump to album list" } : undefined}
+          />
+        )}
+
         {albums.length === 0 ? (
           <EmptyState
             message="No confirmed albums yet."
@@ -195,7 +211,7 @@ export default async function HealthPage() {
             }
           />
         ) : (
-          <ul className="space-y-4">
+          <ul id="albums" className="space-y-4">
             {albums.map((album) => {
               const albumIssues = issuesByAlbum.get(album.id) ?? [];
               const albumErrorCount = albumIssues.filter((i) => i.severity === "error").length;

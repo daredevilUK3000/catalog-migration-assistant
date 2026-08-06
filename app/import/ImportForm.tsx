@@ -8,6 +8,8 @@ import PageHeader from "@/components/ui/PageHeader";
 import Card from "@/components/ui/Card";
 import Button from "@/components/ui/Button";
 import SegmentedControl from "@/components/ui/SegmentedControl";
+import NextStepBanner from "@/components/ui/NextStepBanner";
+import { stepEyebrow } from "@/lib/workflowSteps";
 import {
   type UploadMethod,
   METHOD_LABEL,
@@ -126,10 +128,11 @@ export default function ImportForm() {
     <main className="min-h-screen bg-paper px-6 py-10">
       <div className="mx-auto max-w-5xl space-y-8">
         <PageHeader
+          eyebrow={step === "done" ? undefined : stepEyebrow(1)}
           title="Import releases"
           description={
             step === "done"
-              ? "Done — here's what to do next."
+              ? "Done — see what's next below."
               : "Nothing is saved to your catalog until you confirm it below."
           }
         />
@@ -227,68 +230,56 @@ export default function ImportForm() {
         )}
 
         {step === "done" && (
-          <Card className="max-w-lg space-y-4 p-6">
-            {savedAlbums.length === 0 ? (
-              <p className="text-ink">No releases were saved.</p>
-            ) : (
-              <>
-                <p className="text-ink">
-                  {savedAlbums.length === 1
-                    ? "Album saved to your catalog."
-                    : `${savedAlbums.length} albums saved to your catalog.`}
-                </p>
+          <div className="max-w-2xl space-y-6">
+            <Card className="space-y-1 p-6">
+              {savedAlbums.length === 0 ? (
+                <p className="text-ink">No releases were saved.</p>
+              ) : (
+                <>
+                  <p className="text-ink">
+                    {savedAlbums.length === 1
+                      ? "Album saved to your catalog."
+                      : `${savedAlbums.length} albums saved to your catalog.`}
+                  </p>
+                  <ul className="mt-3 space-y-1">
+                    {savedAlbums.map((album) => (
+                      <li key={album.id} className="flex items-center justify-between text-sm">
+                        <span className="text-ink">
+                          {album.title} — {album.artist}
+                        </span>
+                        <Link
+                          href={`/albums/attach?id=${album.id}`}
+                          className="font-medium text-ink underline"
+                        >
+                          Attach files
+                        </Link>
+                      </li>
+                    ))}
+                  </ul>
+                </>
+              )}
+            </Card>
 
-                <div className="rounded-md border border-ink/10 bg-ink/[0.03] p-4 text-sm text-ink/70">
-                  <p className="font-medium text-ink">What to do next</p>
-                  <ol className="mt-2 list-decimal space-y-1.5 pl-5">
-                    <li>
-                      <span className="font-medium text-ink">Attach files</span> — use the link next
-                      to each album below to add artwork and point the tool at the audio files on
-                      this computer (nothing is uploaded here, just verified).
-                    </li>
-                    <li>
-                      Then go to{" "}
-                      <Link href="/health" className="font-medium text-ink underline hover:text-brass">
-                        Catalog health
-                      </Link>{" "}
-                      and run a check — it flags missing ISRCs, undersized artwork, and other gaps
-                      before you try uploading anywhere else.
-                    </li>
-                    <li>
-                      Once it's clean, generate an export pack from the album's page and log
-                      progress in the{" "}
-                      <Link
-                        href="/migrations"
-                        className="font-medium text-ink underline hover:text-brass"
-                      >
-                        Migration tracker
-                      </Link>{" "}
-                      as you complete each step on your new distributor's site.
-                    </li>
-                  </ol>
-                </div>
-
-                <ul className="space-y-1">
-                  {savedAlbums.map((album) => (
-                    <li key={album.id} className="flex items-center justify-between text-sm">
-                      <span className="text-ink">
-                        {album.title} — {album.artist}
-                      </span>
-                      <Link
-                        href={`/albums/attach?id=${album.id}`}
-                        className="font-medium text-ink underline"
-                      >
-                        Attach files
-                      </Link>
-                    </li>
-                  ))}
-                </ul>
-              </>
+            {savedAlbums.length > 0 && (
+              <NextStepBanner
+                step={2}
+                title={
+                  savedAlbums.length === 1
+                    ? `Attach files for "${savedAlbums[0].title}"`
+                    : `Attach files for your ${savedAlbums.length} new albums`
+                }
+                description="Add artwork and point the tool at your audio files on this computer — nothing is uploaded, just verified against your catalog. Everything saves automatically as you go."
+                cta={{
+                  href: `/albums/attach?id=${savedAlbums[0].id}`,
+                  label: savedAlbums.length === 1 ? "Attach files" : `Start with "${savedAlbums[0].title}"`,
+                }}
+              />
             )}
+
             <Button type="button" variant="secondary" onClick={reset}>
               Import another
             </Button>
-          </Card>
+          </div>
         )}
       </div>
     </main>

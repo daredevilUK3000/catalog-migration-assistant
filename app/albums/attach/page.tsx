@@ -3,6 +3,8 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { getCurrentUserId } from "@/lib/auth/currentUser";
 import type { Album, Track } from "@/types/catalog";
 import AttachFilesForm from "./AttachFilesForm";
+import PageHeader from "@/components/ui/PageHeader";
+import { stepEyebrow } from "@/lib/workflowSteps";
 
 export default async function AttachFilesPage({
   searchParams,
@@ -45,12 +47,11 @@ export default async function AttachFilesPage({
   return (
     <main className="min-h-screen bg-neutral-50 px-6 py-10">
       <div className="mx-auto max-w-3xl space-y-8">
-        <div>
-          <h1 className="text-2xl font-semibold text-neutral-900">Attach files</h1>
-          <p className="mt-1 text-neutral-600">
-            {album.title} — {album.artist}
-          </p>
-        </div>
+        <PageHeader
+          eyebrow={stepEyebrow(2)}
+          title="Attach files"
+          description={`${album.title} — ${album.artist}`}
+        />
         <AttachFilesForm album={album} tracks={tracks} />
       </div>
     </main>
