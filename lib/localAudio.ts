@@ -21,6 +21,10 @@ export interface LocalAudioFile {
   name: string;
   size: number;
   format: string;
+  /** Kept so lib/audioMatcher.ts can re-read a bounded byte range (WAV/FLAC
+   * headers) for shortlisted candidates only — never read up front for all
+   * files, since most of them will never need it. */
+  handle: FileSystemFileHandle;
 }
 
 export function isLocalFileVerificationSupported(): boolean {
@@ -50,12 +54,14 @@ export async function listAudioFiles(root: FileSystemDirectoryHandle): Promise<L
       if (handle.kind === "file") {
         const ext = name.split(".").pop()?.toLowerCase() ?? "";
         if (!(ext in AUDIO_EXT_FORMAT)) continue;
-        const file = await (handle as FileSystemFileHandle).getFile();
+        const fileHandle = handle as FileSystemFileHandle;
+        const file = await fileHandle.getFile();
         files.push({
           relativePath: prefix ? `${prefix}/${name}` : name,
           name,
           size: file.size,
           format: formatForName(name),
+          handle: fileHandle,
         });
       } else if (depth < 1) {
         await readLevel(handle as FileSystemDirectoryHandle, prefix ? `${prefix}/${name}` : name, depth + 1);

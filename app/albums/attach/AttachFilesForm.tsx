@@ -12,6 +12,7 @@ import {
   type LocalAudioFile,
 } from "@/lib/localAudio";
 import NextStepBanner from "@/components/ui/NextStepBanner";
+import SmartMatchPanel from "@/components/SmartMatchPanel";
 
 const ARTWORK_ACCEPT = "image/jpeg,image/png,image/webp";
 
@@ -158,6 +159,15 @@ export default function AttachFilesForm({ album, tracks }: { album: Album; track
               )}
             </div>
             {folderError && <p className="text-sm text-red-600">{folderError}</p>}
+
+            {folderFiles && folderFiles.length > 0 && (
+              <SmartMatchPanel
+                tracks={tracks}
+                folderFiles={folderFiles}
+                audioRefs={audioRefs}
+                onSave={saveReference}
+              />
+            )}
 
             <ul className="divide-y divide-neutral-100">
               {tracks.map((track) => {
