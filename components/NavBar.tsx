@@ -11,6 +11,7 @@ const NAV_LINKS = [
   { href: "/health", label: "Catalog health" },
   { href: "/albums/export-all", label: "Export packs" },
   { href: "/migrations", label: "Migration tracker" },
+  { href: "/faq", label: "FAQ" },
   { href: "/billing", label: "Billing" },
 ] as const;
 
