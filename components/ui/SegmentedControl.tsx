@@ -28,7 +28,7 @@ export default function SegmentedControl({
             key={opt.value}
             type="button"
             onClick={() => onChange(opt.value)}
-            className={`focus-ring rounded px-4 py-1.5 text-sm font-medium transition-colors ${
+            className={`focus-ring whitespace-nowrap rounded px-4 py-1.5 text-sm font-medium transition-colors ${
               active ? "bg-ink text-paper" : "text-ink/60 hover:text-ink"
             }`}
           >
